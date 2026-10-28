@@ -56,7 +56,7 @@ const toBase64Url = (s: string) =>
 const fromBase64Url = (s: string) => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
 
 /** Where links point. The installed Android app has no public address, so it links to the web version. */
-export const PUBLIC_URL = 'https://thacklab.github.io/Helpful-fixes/';
+export const PUBLIC_URL = 'https://thacklab.github.io/chess/';
 /** The address links should open: this site, or the public web version from inside the Android app. */
 export function baseUrl(): string {
   const { protocol, hostname, origin, pathname } = window.location;

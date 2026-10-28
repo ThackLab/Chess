@@ -46,7 +46,8 @@ Your games, reviews and puzzles live in your browser's IndexedDB; there is no ac
 ## Run it
 
 ```bash
-cd chess-app
+git clone https://github.com/ThackLab/chess
+cd chess
 npm install
 npm run dev        # http://localhost:5173
 ```
@@ -58,7 +59,7 @@ The dev and preview servers send cross-origin-isolation headers, so the analysis
 ### Android app (APK)
 
 ```bash
-cd chess-app
+cd chess
 ./android/build-apk.sh      # -> android/build/outpost-chess.apk
 ```
 
@@ -70,11 +71,11 @@ By default the APK is signed with a public debug key, which is fine for your own
 
 ### iPhone and iPad
 
-There is no App Store build: on iOS the app runs as a web app. Open the deployed site (see below; for this repo https://thacklab.github.io/Helpful-fixes/) in **Safari**, tap **Share → Add to Home Screen**, and open it from the new icon. It then runs full screen and works offline. Games, reviews and puzzle progress are kept on the device; iOS keeps a home-screen app's storage, but may clear a site's storage that is only used in a Safari tab and not opened for a few weeks.
+There is no App Store build: on iOS the app runs as a web app. Open the deployed site (see below; for this repo https://thacklab.github.io/chess/) in **Safari**, tap **Share → Add to Home Screen**, and open it from the new icon. It then runs full screen and works offline. Games, reviews and puzzle progress are kept on the device; iOS keeps a home-screen app's storage, but may clear a site's storage that is only used in a Safari tab and not opened for a few weeks.
 
 ### Deploy to GitHub Pages
 
-`.github/workflows/chess-app-pages.yml` tests and builds the app on every PR and deploys it on pushes to `main`, together with the Android app at `<site>/outpost-chess.apk` (invites link to it). To turn deployment on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
+`.github/workflows/pages.yml` tests and builds the app on every PR and deploys it on pushes to `main`, together with the Android app at `<site>/outpost-chess.apk` (invites link to it). To turn deployment on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
 
 ## How the bots work
 

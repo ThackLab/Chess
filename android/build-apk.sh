@@ -4,7 +4,7 @@
 # app, javac + d8 compile the WebView wrapper, and uber-apk-signer aligns and
 # signs it. Needs: JDK 17+, node/npm, curl, unzip, zip.
 #
-#   chess-app/android/build-apk.sh            -> chess-app/android/build/outpost-chess.apk
+#   android/build-apk.sh            -> android/build/outpost-chess.apk
 #   KEYSTORE=my.jks KS_PASS=... KEY_ALIAS=... KEY_PASS=... build-apk.sh   (release key)
 #
 # Without KEYSTORE the APK is signed with uber-apk-signer's public debug key,
