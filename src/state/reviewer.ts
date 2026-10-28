@@ -76,6 +76,7 @@ export function puzzlesFrom(review: GameReview, gameId: string, color: Color | u
       solution: best.pv.slice(0, 7),
       solutionSan: best.san.slice(0, 7),
       playedSan: m.san,
+      prev: m.ply > 0 ? review.moves[m.ply - 1]?.uci : undefined,
       classification: m.classification,
       comment: m.comment,
       lesson: (() => {

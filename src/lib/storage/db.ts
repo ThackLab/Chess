@@ -49,6 +49,8 @@ export interface Puzzle {
   solution: string[];
   solutionSan: string[];
   playedSan: string;
+  /** The opponent's move that led to this position (UCI), shown on the board. */
+  prev?: string;
   classification: string;
   comment: string;
   /** The pattern behind the mistake (see review/lessons). */

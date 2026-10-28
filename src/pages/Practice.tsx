@@ -4,7 +4,7 @@ import type { DrawShape } from 'chessground/draw';
 import type { Key } from 'chessground/types';
 import { Board, type PromotionPiece } from '../components/Board';
 import { ClassIcon } from '../components/ClassIcon';
-import { deletePuzzle, listPuzzles, onDbChange, savePuzzle, type Puzzle } from '../lib/storage/db';
+import { deletePuzzle, getGame, listPuzzles, onDbChange, savePuzzle, type Puzzle } from '../lib/storage/db';
 import { getAnalysisEngine } from '../lib/engine/manager';
 import { scoreToCp } from '../lib/engine/uci';
 import { cpToExpected } from '../lib/review/winprob';
@@ -52,6 +52,25 @@ export function PracticePage() {
   }, [due, current]);
 
   const chess = useMemo(() => (current ? new Chess(current.fen) : null), [current]);
+
+  // The opponent's move just before the mistake, highlighted like a last move. Older puzzles
+  // didn't store it, so it is looked up in the game (and only used if it leads to this position).
+  const [prev, setPrev] = useState<string | null>(null);
+  useEffect(() => {
+    setPrev(current?.prev ?? null);
+    if (!current || current.prev || current.ply < 1) return;
+    let alive = true;
+    void getGame(current.gameId).then((g) => {
+      const u = g?.moves[current.ply - 1];
+      if (!alive || !g || !u) return;
+      const c = new Chess(g.startFen);
+      for (const m of g.moves.slice(0, current.ply)) if (!playUci(c, m)) return;
+      if (c.fen().split(' ').slice(0, 4).join(' ') === current.fen.split(' ').slice(0, 4).join(' ')) setPrev(u);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [current]);
   const hints = useMemo(
     () =>
       current?.solution[0] && current.solutionSan[0]
@@ -72,8 +91,8 @@ export function PracticePage() {
       playUci(c, tried);
       return { fen: c.fen(), lastMove: [tried.slice(0, 2), tried.slice(2, 4)] as [string, string], check: c.inCheck() };
     }
-    return { fen: current.fen, lastMove: undefined, check: chess.inCheck() };
-  }, [current, chess, phase, tried]);
+    return { fen: current.fen, lastMove: prev ? ([prev.slice(0, 2), prev.slice(2, 4)] as [string, string]) : undefined, check: chess.inCheck() };
+  }, [current, chess, phase, tried, prev]);
 
   const hintHighlights = useMemo(
     () => (phase === 'solve' && hintLevel >= 2 && hints ? new Map([[hints.square, 'hl-key']]) : undefined),

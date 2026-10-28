@@ -237,7 +237,9 @@ export function ReviewPage({ gameId }: { gameId: string }) {
     }
     if (line) {
       const c = new Chess(line.base);
-      let lastMove: [string, string] | undefined;
+      // Before the line's first move, show the move that led to its starting position.
+      const led = m && line.base === m.fenAfter ? m.uci : m && line.base === m.fenBefore && cur > 0 ? moves[cur - 1].uci : undefined;
+      let lastMove: [string, string] | undefined = led ? [led.slice(0, 2), led.slice(2, 4)] : undefined;
       for (const u of line.moves.slice(0, line.idx)) {
         playUci(c, u);
         lastMove = [u.slice(0, 2), u.slice(2, 4)];
