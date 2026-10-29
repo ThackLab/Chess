@@ -1,0 +1,59 @@
+name: Release the Android app
+
+# Pushing a version tag (v1.2.0, v1.3.0 ...) builds the APK from the code at
+# that tag and publishes it as a GitHub Release, with its SHA-256 fingerprint
+# and a link to this build's public log.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The Android version code counts commits, so newer builds install over older ones.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm test
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: ./android/build-apk.sh
+      - name: Fingerprint
+        run: |
+          cd android/build
+          sha256sum grandmasters.apk > grandmasters.apk.sha256
+          cat grandmasters.apk.sha256
+          echo "SHA256=$(cut -d' ' -f1 grandmasters.apk.sha256)" >> "$GITHUB_ENV"
+          echo "### grandmasters.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "SHA-256: \`$(cut -d' ' -f1 grandmasters.apk.sha256)\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          cat > notes.md <<EOF
+          **Android:** download \`grandmasters.apk\` below, open it, and allow installing from that app when Android asks.
+
+          Built by GitHub Actions from commit $GITHUB_SHA, nothing added by hand. The full build log is public: $run_url
+
+          SHA-256 of \`grandmasters.apk\`: \`$SHA256\`
+          EOF
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" android/build/grandmasters.apk android/build/grandmasters.apk.sha256 --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" android/build/grandmasters.apk android/build/grandmasters.apk.sha256 \
+              --title "Grandmasters $GITHUB_REF_NAME" --notes-file notes.md --latest
+          fi

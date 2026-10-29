@@ -20,9 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          # The Android version code counts commits, so newer builds install over older ones.
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -31,21 +28,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      # The Android app, so invites can link to a download: <site>/grandmasters.apk
-      - uses: actions/setup-java@v4
-        if: github.event_name != 'pull_request'
-        with:
-          distribution: temurin
-          java-version: 17
-      - if: github.event_name != 'pull_request'
-        run: |
-          ./android/build-apk.sh
-          cp android/build/grandmasters.apk dist/grandmasters.apk
-          # A fingerprint anyone can compare with the APK they were sent.
-          (cd dist && sha256sum grandmasters.apk > grandmasters.apk.sha256)
-          echo "### grandmasters.apk" >> "$GITHUB_STEP_SUMMARY"
-          echo "SHA-256: \`$(cut -d' ' -f1 dist/grandmasters.apk.sha256)\`" >> "$GITHUB_STEP_SUMMARY"
-          cat dist/grandmasters.apk.sha256
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:

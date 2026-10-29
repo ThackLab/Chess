@@ -10,7 +10,7 @@ import { formatCode, normaliseCode } from '../lib/online/relay';
 import { navigate } from '../lib/router';
 import { copyText } from '../lib/platform';
 import { playSound } from '../lib/sound';
-import { baseUrl, PUBLIC_URL } from '../state/friend';
+import { ANDROID_URL, baseUrl } from '../state/friend';
 import { replay, tcLabel, timeLeft, useHeartbeat, useOnline, usePresence, useRelayStatus, type Clock, type OnlineGame } from '../state/online';
 import { useSettings } from '../state/settings';
 import { monogram } from '../lib/bots/bots';
@@ -34,7 +34,7 @@ export const inviteLink = (code: string) => `${baseUrl()}#/online/${code}`;
 /** Sends the invite through the phone's share sheet, or copies it. */
 export async function shareInvite(code: string, tc: Clock | null) {
   const url = inviteLink(code);
-  const text = `Play me at chess on Grandmasters (${tcLabel(tc)})! Open the link, or in the app tap Play a friend → Join with code ${formatCode(code)}. Android app: ${PUBLIC_URL}grandmasters.apk`;
+  const text = `Play me at chess on Grandmasters (${tcLabel(tc)})! Open the link, or in the app tap Play a friend → Join with code ${formatCode(code)}. Android app: ${ANDROID_URL}`;
   if (typeof navigator.share === 'function') {
     try {
       await navigator.share({ title: 'Grandmasters', text, url });

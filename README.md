@@ -41,12 +41,12 @@ A free, private, chess.com-style app that runs entirely in your browser:
 
 ## Get it
 
-- **Android:** download [grandmasters.apk](https://thacklab.github.io/Chess/grandmasters.apk), open it and allow installing from that app when Android asks. Android warns about any app that isn't from the Play Store; that's expected.
+- **Android:** download `grandmasters.apk` from the [latest release](https://github.com/ThackLab/Chess/releases/latest), open it and allow installing from that app when Android asks. Android warns about any app that isn't from the Play Store; that's expected.
 - **iPhone, iPad or a computer:** open https://thacklab.github.io/Chess/ (on iPhone, in Safari: **Share → Add to Home Screen**).
 
 ## Privacy and safety
 
-Everything the app is made of is in this repository, and both the website and the APK above are built from it by GitHub Actions; every build's log is public under the repository's **Actions** tab.
+Everything the app is made of is in this repository. The APK on the Releases page and the website are built from it by GitHub Actions, never by hand, and every build's log is public under the repository's **Actions** tab.
 
 - **No account, no ads, no analytics, no tracking.** There is no server of ours. Games, reviews, puzzles and settings stay on the device (the browser's IndexedDB and local storage), and Settings has a button to wipe them.
 - **Android permissions:** `INTERNET` and `VIBRATE`, nothing else (see `android/AndroidManifest.xml`). No contacts, location, camera, microphone or files; Android shows this under *Settings → Apps → Grandmasters → Permissions*.
@@ -56,7 +56,7 @@ Everything the app is made of is in this repository, and both the website and th
   - *AI coach:* off by default; with your own Anthropic API key it sends the game you ask about to Anthropic. The key stays on your device.
   - *Games by link:* the whole game travels inside the link you send; nothing else is involved.
   - *The app itself:* loading the website fetches it from GitHub Pages. The Android app needs no download at all to run.
-- **Checking the APK:** the build writes the APK's SHA-256 fingerprint next to it ([grandmasters.apk.sha256](https://thacklab.github.io/Chess/grandmasters.apk.sha256)) and into the build log. Compare it with the file you were sent (`sha256sum grandmasters.apk`, or any SHA-256 app), or build the APK yourself from this code (below). The APK is signed with uber-apk-signer's public debug key, so the signature alone doesn't say who built it; the fingerprint does.
+- **Checking the APK:** each release's notes give the commit it was built from, a link to its build log, and the APK's SHA-256 fingerprint (also attached as `grandmasters.apk.sha256`). Compare it with the file you downloaded (`sha256sum grandmasters.apk`, or any SHA-256 app), or build the APK yourself from the code (below). The APK is signed with uber-apk-signer's public debug key, so the signature alone doesn't say who built it; the fingerprint and the build log do.
 
 
 **How live games work.** There is no game server: moves go through free public MQTT brokers (EMQX, HiveMQ and Mosquitto's test broker, all at once, so a game survives one of them being down). Every message holds the whole game with a version number and is encrypted (AES-GCM) with a key made from the game code, under a topic that is a hash of the code, so the brokers only see noise. Each device checks every state it receives: the moves must be legal and follow on from the moves it already has, and only the opponent's moves are accepted. The latest state is kept on the broker, so whoever reconnects gets it straight away. `src/lib/online/mqtt.ts` is a small MQTT-over-WebSocket client, `src/lib/online/relay.ts` the encryption and brokers, and `src/state/online.ts` the game rules (`src/state/online.test.ts` tests them).
@@ -91,9 +91,10 @@ By default the APK is signed with a public debug key, which is fine for your own
 
 There is no App Store build: on iOS the app runs as a web app. Open the deployed site (see below; for this repo https://thacklab.github.io/Chess/) in **Safari**, tap **Share → Add to Home Screen**, and open it from the new icon. It then runs full screen and works offline. Games, reviews and puzzle progress are kept on the device; iOS keeps a home-screen app's storage, but may clear a site's storage that is only used in a Safari tab and not opened for a few weeks.
 
-### Deploy to GitHub Pages
+### Releases and the website
 
-`.github/workflows/pages.yml` tests and builds the app on every PR and deploys it on pushes to `main`, together with the Android app at `<site>/grandmasters.apk` (invites link to it). To turn deployment on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
+- **Android releases:** `.github/workflows/release.yml` runs when a version tag is pushed (`git tag v1.3.0 && git push origin v1.3.0`). It tests the code, builds the APK and publishes it as a GitHub Release, with its SHA-256 and a link to the build log.
+- **The website:** `.github/workflows/pages.yml` tests and builds the app on every PR and deploys it to GitHub Pages on pushes to `main`. To turn it on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
 
 ## How the bots work
 
