@@ -1,36 +1,63 @@
 name: Release the Android app
 
-# Pushing a version tag (v1.2.0, v1.3.0 ...) builds the APK from the code at
-# that tag and publishes it as a GitHub Release, with its SHA-256 fingerprint
-# and a link to this build's public log.
+# When the version in package.json has no release yet, this builds the APK
+# from the code on main and publishes it as a GitHub Release (tag v<version>),
+# with its SHA-256 fingerprint and a link to this build's public log.
+# To release: bump "version" in package.json and push to main, or run this
+# workflow from the Actions tab.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
           # The Android version code counts commits, so newer builds install over older ones.
           fetch-depth: 0
+      - name: Version
+        id: v
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "$tag is already released; bump the version in package.json to make a new release." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v4
+        if: steps.v.outputs.new == 'true'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci
-      - run: npm test
+      - if: steps.v.outputs.new == 'true'
+        run: npm ci
+      - if: steps.v.outputs.new == 'true'
+        run: npm test
       - uses: actions/setup-java@v4
+        if: steps.v.outputs.new == 'true'
         with:
           distribution: temurin
           java-version: 17
-      - run: ./android/build-apk.sh
+      - if: steps.v.outputs.new == 'true'
+        run: ./android/build-apk.sh
       - name: Fingerprint
+        if: steps.v.outputs.new == 'true'
         run: |
           cd android/build
           sha256sum grandmasters.apk > grandmasters.apk.sha256
@@ -39,8 +66,9 @@ jobs:
           echo "### grandmasters.apk" >> "$GITHUB_STEP_SUMMARY"
           echo "SHA-256: \`$(cut -d' ' -f1 grandmasters.apk.sha256)\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Publish the release
+        if: steps.v.outputs.new == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
         run: |
           run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           cat > notes.md <<EOF
@@ -50,10 +78,5 @@ jobs:
 
           SHA-256 of \`grandmasters.apk\`: \`$SHA256\`
           EOF
-          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" android/build/grandmasters.apk android/build/grandmasters.apk.sha256 --clobber
-            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
-          else
-            gh release create "$GITHUB_REF_NAME" android/build/grandmasters.apk android/build/grandmasters.apk.sha256 \
-              --title "Grandmasters $GITHUB_REF_NAME" --notes-file notes.md --latest
-          fi
+          gh release create "$TAG" android/build/grandmasters.apk android/build/grandmasters.apk.sha256 \
+            --target "$GITHUB_SHA" --title "Grandmasters $TAG" --notes-file notes.md --latest

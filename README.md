@@ -93,7 +93,7 @@ There is no App Store build: on iOS the app runs as a web app. Open the deployed
 
 ### Releases and the website
 
-- **Android releases:** `.github/workflows/release.yml` runs when a version tag is pushed (`git tag v1.3.0 && git push origin v1.3.0`). It tests the code, builds the APK and publishes it as a GitHub Release, with its SHA-256 and a link to the build log.
+- **Android releases:** `.github/workflows/release.yml` publishes a release whenever the `version` in `package.json` has none yet: bump it and push to `main` (or run the workflow from the **Actions** tab). It tests the code, builds the APK from that commit and publishes it as a GitHub Release tagged `v<version>`, with its SHA-256 and a link to the build log.
 - **The website:** `.github/workflows/pages.yml` tests and builds the app on every PR and deploys it to GitHub Pages on pushes to `main`. To turn it on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
 
 ## How the bots work
