@@ -45,6 +45,6 @@ export const useProfile = create<Profile>()(
       },
       setRating: (r) => set({ rating: r, history: [...get().history, { t: Date.now(), rating: r }] }),
     }),
-    { name: 'outpost.profile', version: 1 },
+    { name: 'grandmasters.profile', version: 1 },
   ),
 );

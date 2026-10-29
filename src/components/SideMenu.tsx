@@ -48,7 +48,7 @@ export function AppBar({ onMenu }: { onMenu: () => void }) {
         <Menu size={26} />
       </button>
       <a className="appbar-brand" href="#/">
-        <Logo size={26} /> Outpost
+        <Logo size={26} /> Grandmasters
       </a>
       <span className="spacer" />
       <span className="appbar-streak" title="Days in a row with some training">

@@ -194,7 +194,7 @@ export const useLearn = create<LearnState>()(
       reset: () => set(fresh),
     }),
     {
-      name: 'outpost.learn',
+      name: 'grandmasters.learn',
       version: 2,
       migrate: (old, version) => {
         const o = (old ?? {}) as Partial<LearnState>;

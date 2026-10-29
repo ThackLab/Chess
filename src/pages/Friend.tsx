@@ -27,7 +27,7 @@ async function sendLink(g: FriendGame) {
   const text = g.result ? `Our chess game is over (${g.result}).` : 'Your move in our chess game.';
   if (typeof navigator.share === 'function') {
     try {
-      await navigator.share({ title: 'Outpost Chess', text, url });
+      await navigator.share({ title: 'Grandmasters', text, url });
       return;
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;

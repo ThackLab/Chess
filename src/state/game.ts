@@ -132,8 +132,8 @@ async function persistFinished(g: LiveGame): Promise<string> {
   const date = new Date(g.createdAt);
   const pgnDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   const tree = treeFromMoves(g.startFen, g.moves, {
-    Event: `Outpost vs ${bot.name}`,
-    Site: 'Outpost Chess',
+    Event: `Grandmasters vs ${bot.name}`,
+    Site: 'Grandmasters',
     Date: pgnDate,
     White: white.name,
     Black: black.name,
@@ -305,6 +305,6 @@ export const useLiveGame = create<GameStore>()(
       },
       clear: () => set({ game: null }),
     }),
-    { name: 'outpost.live-game', version: 1 },
+    { name: 'grandmasters.live-game', version: 1 },
   ),
 );

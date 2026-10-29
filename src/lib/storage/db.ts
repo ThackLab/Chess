@@ -63,9 +63,9 @@ export interface Puzzle {
   solved: number;
 }
 
-const games: UseStore = createStore('outpost-games', 'games');
-const reviews: UseStore = createStore('outpost-reviews', 'reviews');
-const puzzles: UseStore = createStore('outpost-puzzles', 'puzzles');
+const games: UseStore = createStore('grandmasters-games', 'games');
+const reviews: UseStore = createStore('grandmasters-reviews', 'reviews');
+const puzzles: UseStore = createStore('grandmasters-puzzles', 'puzzles');
 
 export const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -141,7 +141,7 @@ export async function deletePuzzle(id: string) {
 }
 
 export interface Backup {
-  app: 'outpost-chess';
+  app: 'grandmasters';
   version: 1;
   exportedAt: number;
   games: GameRecord[];
@@ -155,7 +155,7 @@ export interface Backup {
 export async function exportAll(profile: unknown, learn?: unknown): Promise<Backup> {
   return {
     learn,
-    app: 'outpost-chess',
+    app: 'grandmasters',
     version: 1,
     exportedAt: Date.now(),
     games: await listGames(),
@@ -166,7 +166,7 @@ export async function exportAll(profile: unknown, learn?: unknown): Promise<Back
 }
 
 export async function importAll(b: Backup) {
-  if (b.app !== 'outpost-chess') throw new Error('Not an Outpost backup file');
+  if (b.app !== 'grandmasters') throw new Error('Not a Grandmasters backup file');
   await setMany(
     b.games.map((g) => [g.id, g]),
     games,

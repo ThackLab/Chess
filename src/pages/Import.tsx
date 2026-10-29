@@ -25,7 +25,7 @@ interface Candidate {
   site: string;
 }
 
-const LS_USER = 'outpost.import-user';
+const LS_USER = 'grandmasters.import-user';
 
 function savedUser(src: Source) {
   try {

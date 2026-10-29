@@ -9,7 +9,7 @@ interface AndroidBridge {
   vibrate?(pattern: string): void;
 }
 
-const bridge = (globalThis as { OutpostAndroid?: AndroidBridge }).OutpostAndroid;
+const bridge = (globalThis as { GrandmastersAndroid?: AndroidBridge }).GrandmastersAndroid;
 
 export const isAndroidApp = !!bridge;
 
@@ -52,7 +52,7 @@ export async function shareOrSaveFile(name: string, mime: string, text: string):
   const file = typeof File !== 'undefined' ? new File([text], name, { type: mime }) : null;
   if (file && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'Outpost Chess backup' });
+      await navigator.share({ files: [file], title: 'Grandmasters backup' });
       return 'shared';
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return null;

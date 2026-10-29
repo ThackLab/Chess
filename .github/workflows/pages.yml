@@ -31,14 +31,14 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      # The Android app, so invites can link to a download: <site>/outpost-chess.apk
+      # The Android app, so invites can link to a download: <site>/grandmasters.apk
       - uses: actions/setup-java@v4
         if: github.event_name != 'pull_request'
         with:
           distribution: temurin
           java-version: 17
       - if: github.event_name != 'pull_request'
-        run: ./android/build-apk.sh && cp android/build/outpost-chess.apk dist/outpost-chess.apk
+        run: ./android/build-apk.sh && cp android/build/grandmasters.apk dist/grandmasters.apk
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:

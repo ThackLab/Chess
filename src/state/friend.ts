@@ -106,8 +106,8 @@ async function saveToLibrary(g: FriendGame): Promise<string> {
   const date = new Date(g.createdAt);
   const pgnDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   const tree = treeFromMoves(g.startFen, g.moves, {
-    Event: g.mode === 'link' ? 'Outpost game by link' : 'Outpost pass and play',
-    Site: 'Outpost Chess',
+    Event: g.mode === 'link' ? 'Grandmasters game by link' : 'Grandmasters pass and play',
+    Site: 'Grandmasters',
     Date: pgnDate,
     White: g.white,
     Black: g.black,
@@ -315,6 +315,6 @@ export const useFriends = create<FriendStore>()(
         remove: (id) => set((s) => ({ games: s.games.filter((g) => g.id !== id) })),
       };
     },
-    { name: 'outpost.friends', version: 1 },
+    { name: 'grandmasters.friends', version: 1 },
   ),
 );

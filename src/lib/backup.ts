@@ -13,10 +13,10 @@ const MIN_GAMES = 3;
 
 export async function backupNow(): Promise<string | null> {
   const data = await exportAll(
-    JSON.parse(localStorage.getItem('outpost.profile') ?? 'null'),
-    JSON.parse(localStorage.getItem('outpost.learn') ?? 'null'),
+    JSON.parse(localStorage.getItem('grandmasters.profile') ?? 'null'),
+    JSON.parse(localStorage.getItem('grandmasters.learn') ?? 'null'),
   );
-  const where = await shareOrSaveFile(`outpost-backup-${new Date().toISOString().slice(0, 10)}.json`, 'application/json', JSON.stringify(data));
+  const where = await shareOrSaveFile(`grandmasters-backup-${new Date().toISOString().slice(0, 10)}.json`, 'application/json', JSON.stringify(data));
   if (where) useSettings.getState().set({ lastBackupAt: Date.now() });
   return where;
 }

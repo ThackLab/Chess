@@ -9,7 +9,7 @@ const BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884
 /** Brokers to use; tests point this at a local broker through localStorage. */
 function brokers(): string[] {
   try {
-    const own = JSON.parse(localStorage.getItem('outpost.brokers') ?? 'null');
+    const own = JSON.parse(localStorage.getItem('grandmasters.brokers') ?? 'null');
     if (Array.isArray(own) && own.length) return own;
   } catch {
     /* ignore */
@@ -55,8 +55,8 @@ function channel(code: string): Promise<Channel> {
   let c = channels.get(code);
   if (!c) {
     c = (async () => {
-      const topic = `outpost/v1/${hex(await sha256(`outpost-topic:${code}`)).slice(0, 32)}`;
-      const key = await crypto.subtle.importKey('raw', (await sha256(`outpost-key:${code}`)) as BufferSource, 'AES-GCM', false, [
+      const topic = `grandmasters/v1/${hex(await sha256(`grandmasters-topic:${code}`)).slice(0, 32)}`;
+      const key = await crypto.subtle.importKey('raw', (await sha256(`grandmasters-key:${code}`)) as BufferSource, 'AES-GCM', false, [
         'encrypt',
         'decrypt',
       ]);
@@ -138,7 +138,7 @@ class Relay {
   }
 
   private async dispatch(topic: string, payload: Uint8Array) {
-    const m = /^(outpost\/v1\/[0-9a-f]+)\/(s|b)(?:\/(\w))?$/.exec(topic);
+    const m = /^(grandmasters\/v1\/[0-9a-f]+)\/(s|b)(?:\/(\w))?$/.exec(topic);
     if (!m) return;
     const base = m[1];
     const key = this.keys.get(base);

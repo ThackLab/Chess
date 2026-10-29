@@ -41,8 +41,8 @@ export function SettingsPage() {
     try {
       const data = JSON.parse(await file.text()) as Backup;
       await importAll(data);
-      if (data.profile) localStorage.setItem('outpost.profile', JSON.stringify(data.profile));
-      if (data.learn) localStorage.setItem('outpost.learn', JSON.stringify(data.learn));
+      if (data.profile) localStorage.setItem('grandmasters.profile', JSON.stringify(data.profile));
+      if (data.learn) localStorage.setItem('grandmasters.learn', JSON.stringify(data.learn));
       toast(`Restored ${data.games.length} games`);
       setTimeout(() => location.reload(), 800);
     } catch (e) {
@@ -228,7 +228,7 @@ export function SettingsPage() {
         <section className="card">
           <h2>About</h2>
           <p className="muted" style={{ fontSize: '0.88rem' }}>
-            Outpost uses{' '}
+            Grandmasters uses{' '}
             <a href="https://stockfishchess.org" target="_blank" rel="noreferrer">
               Stockfish 18
             </a>{' '}

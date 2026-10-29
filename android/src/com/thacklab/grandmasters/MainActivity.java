@@ -1,4 +1,4 @@
-package com.thacklab.outpostchess;
+package com.thacklab.grandmasters;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Hosts the Outpost web app. Files are served from the APK's assets under a
+ * Hosts the Grandmasters web app. Files are served from the APK's assets under a
  * secure https origin (so Web Workers, WebAssembly and IndexedDB all work
  * offline), and a small bridge covers what a WebView can't do on its own.
  */
@@ -212,7 +212,7 @@ public class MainActivity extends Activity {
                 @Override
                 public void run() {
                     ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Outpost Chess", text));
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Grandmasters", text));
                 }
             });
         }

@@ -1,6 +1,6 @@
 {
-  "name": "Outpost Chess",
-  "short_name": "Outpost",
+  "name": "Grandmasters",
+  "short_name": "Grandmasters",
   "description": "Play Stockfish bots, get free game reviews and analyse PGNs.",
   "start_url": "./",
   "scope": "./",

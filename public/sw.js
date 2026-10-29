@@ -1,6 +1,6 @@
 // Offline support: the app shell, engine and opening book are cached on first
 // visit so the app keeps working without a connection.
-const CACHE = 'outpost-v4';
+const CACHE = 'grandmasters-v1';
 const CORE = [
   './',
   './index.html',

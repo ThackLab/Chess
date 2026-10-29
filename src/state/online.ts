@@ -102,8 +102,8 @@ async function saveToLibrary(g: OnlineGame): Promise<string | undefined> {
   const date = new Date(g.createdAt);
   const pgnDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   const tree = treeFromMoves(START_FEN, s.m, {
-    Event: 'Outpost online game',
-    Site: 'Outpost Chess',
+    Event: 'Grandmasters online game',
+    Site: 'Grandmasters',
     Date: pgnDate,
     White: s.w,
     Black: s.b,
@@ -326,7 +326,7 @@ export const useOnline = create<OnlineStore>()(
         remove: (code) => set((st) => ({ games: st.games.filter((g) => g.code !== code) })),
       };
     },
-    { name: 'outpost.online', version: 1 },
+    { name: 'grandmasters.online', version: 1 },
   ),
 );
 

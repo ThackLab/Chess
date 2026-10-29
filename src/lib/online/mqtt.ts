@@ -57,7 +57,7 @@ export class MqttClient {
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
     ws.onopen = () => {
-      const id = `outpost-${Math.random().toString(36).slice(2, 12)}`;
+      const id = `grandmasters-${Math.random().toString(36).slice(2, 12)}`;
       const keep = this.opts.keepalive ?? 30;
       // Protocol "MQTT", level 4, clean session, keep-alive.
       ws.send(packet(0x10, [...str('MQTT'), 4, 0x02, keep >> 8, keep & 255, ...str(id)]));

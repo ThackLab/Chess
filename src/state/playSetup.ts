@@ -16,7 +16,7 @@ export const TIME_CONTROLS: { label: string; tc: TimeControl | null }[] = [
   { label: '30 min', tc: { initial: 1_800_000, increment: 0 } },
 ];
 
-const LS_KEY = 'outpost.play-setup';
+const LS_KEY = 'grandmasters.play-setup';
 
 export interface Setup {
   botId: string;

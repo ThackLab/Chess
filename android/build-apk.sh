@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Builds a sideloadable Android APK of Outpost Chess without the Android SDK
+# Builds a sideloadable Android APK of Grandmasters without the Android SDK
 # or Gradle: aapt2 (shipped inside Apktool) packages the resources and the web
 # app, javac + d8 compile the WebView wrapper, and uber-apk-signer aligns and
 # signs it. Needs: JDK 17+, node/npm, curl, unzip, zip.
 #
-#   android/build-apk.sh            -> android/build/outpost-chess.apk
+#   android/build-apk.sh            -> android/build/grandmasters.apk
 #   KEYSTORE=my.jks KS_PASS=... KEY_ALIAS=... KEY_PASS=... build-apk.sh   (release key)
 #
 # Without KEYSTORE the APK is signed with uber-apk-signer's public debug key,
@@ -67,5 +67,5 @@ if [ -n "${KEYSTORE:-}" ]; then
   SIGN_ARGS+=(--ks "$KEYSTORE" --ksPass "$KS_PASS" --ksAlias "$KEY_ALIAS" --ksKeyPass "$KEY_PASS")
 fi
 java -jar "$TOOLS/uber-apk-signer.jar" "${SIGN_ARGS[@]}" > "$BUILD/sign.log"
-cp "$(find "$BUILD/signed" -name '*.apk' | head -1)" "$BUILD/outpost-chess.apk"
-echo "[apk] done: $BUILD/outpost-chess.apk ($(du -h "$BUILD/outpost-chess.apk" | cut -f1), version $VERSION_NAME / $VERSION_CODE)"
+cp "$(find "$BUILD/signed" -name '*.apk' | head -1)" "$BUILD/grandmasters.apk"
+echo "[apk] done: $BUILD/grandmasters.apk ($(du -h "$BUILD/grandmasters.apk" | cut -f1), version $VERSION_NAME / $VERSION_CODE)"

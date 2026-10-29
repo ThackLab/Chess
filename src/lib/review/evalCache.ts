@@ -4,7 +4,7 @@
 import { createStore, entries, get, set, delMany } from 'idb-keyval';
 import type { PositionEval } from './types';
 
-const store = createStore('outpost-evals', 'evals');
+const store = createStore('grandmasters-evals', 'evals');
 const memory = new Map<string, Cached>();
 
 interface Cached {

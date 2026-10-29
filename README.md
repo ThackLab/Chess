@@ -1,4 +1,4 @@
-# Outpost Chess
+# Grandmasters
 
 A free, private, chess.com-style app that runs entirely in your browser:
 
@@ -60,7 +60,7 @@ The dev and preview servers send cross-origin-isolation headers, so the analysis
 
 ```bash
 cd chess
-./android/build-apk.sh      # -> android/build/outpost-chess.apk
+./android/build-apk.sh      # -> android/build/grandmasters.apk
 ```
 
 This needs only a JDK (17+), Node and curl; you don't need the Android SDK or Gradle. The script downloads a few pinned build tools (checksums in `android/tools.sha256`): the Android API jar, Google's d8 compiler, the aapt2 packaged inside Apktool, and uber-apk-signer. The app is a small WebView wrapper (`android/src/.../MainActivity.java`) that serves the web build straight from the APK, so it works fully offline. It adds a native bridge for saving files to *Downloads* and for the clipboard.
@@ -75,7 +75,7 @@ There is no App Store build: on iOS the app runs as a web app. Open the deployed
 
 ### Deploy to GitHub Pages
 
-`.github/workflows/pages.yml` tests and builds the app on every PR and deploys it on pushes to `main`, together with the Android app at `<site>/outpost-chess.apk` (invites link to it). To turn deployment on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
+`.github/workflows/pages.yml` tests and builds the app on every PR and deploys it on pushes to `main`, together with the Android app at `<site>/grandmasters.apk` (invites link to it). To turn deployment on, go to *Settings → Pages → Build and deployment*, set the source to **GitHub Actions**, then re-run the workflow.
 
 ## How the bots work
 

@@ -45,7 +45,7 @@ export const useRepertoire = create<RepertoireState>()(
         return next;
       },
     }),
-    { name: 'outpost.repertoire', version: 1 },
+    { name: 'grandmasters.repertoire', version: 1 },
   ),
 );
 

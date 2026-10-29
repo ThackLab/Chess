@@ -34,7 +34,7 @@ import { useSettings } from '../state/settings';
 import { copyText, saveTextFile } from '../lib/platform';
 import { San } from '../components/Rich';
 
-const LS_KEY = 'outpost.analysis';
+const LS_KEY = 'grandmasters.analysis';
 
 function loadSaved(): { tree: GameTree; cur: string } | null {
   try {
