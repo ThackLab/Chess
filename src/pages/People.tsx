@@ -119,7 +119,7 @@ function FriendRow({ p }: { p: Person }) {
   const [removing, setRemoving] = useState(false);
   return (
     <div className="person-row">
-      <Avatar av={p.av} name={p.name} />
+      <Avatar av={p.av} photo={p.ph} name={p.name} />
       <span className="pr-body">
         <b>{p.name}</b>
         <span>{formatCode(p.id)}</span>
@@ -273,7 +273,7 @@ function NearbyFinder() {
             const friend = friends.find((f) => f.id === p.id);
             return (
               <div key={p.id} className="person-row">
-                <Avatar av={friend?.av ?? p.av} name={friend?.name ?? (p.name || 'Player')} />
+                <Avatar av={friend?.av ?? p.av} photo={friend?.ph} name={friend?.name ?? (p.name || 'Player')} />
                 <span className="pr-body">
                   <b>{friend?.name ?? (p.name || 'Player')}</b>
                   <span>{closeness(p.rssi)}</span>
@@ -305,6 +305,7 @@ function NearbyFinder() {
 function MyCode({ id }: { id: string }) {
   const name = useMyName();
   const av = useSettings((s) => s.avatar);
+  const photo = useSettings((s) => s.photo);
   const share = async () => {
     const url = friendLink(id, name, av);
     const text = `Add me on Grandmasters so we can play chess: open the link, or enter my friend code ${formatCode(id)}.`;
@@ -322,7 +323,7 @@ function MyCode({ id }: { id: string }) {
   return (
     <div className="my-code">
       <button className="mc-me" onClick={() => navigate('/profile')} aria-label="Edit your profile">
-        <Avatar av={av} name={name || 'Me'} />
+        <Avatar av={av} photo={photo} name={name || 'Me'} />
       </button>
       <span className="mc-body">
         <span>{name ? `${name} · your friend code` : 'Your friend code'}</span>

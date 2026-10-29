@@ -8,8 +8,10 @@ export type ReviewDepth = 12 | 16 | 20;
 
 export interface Settings {
   playerName: string;
-  /** The avatar friends see (src/lib/avatars.ts); 0 for initials. */
+  /** The avatar friends see (src/lib/avatars.ts); 0 for initials, 1 for the photo. */
   avatar: number;
+  /** The player's own photo, as a small JPEG data URL ('' for none). */
+  photo: string;
   theme: ThemeId;
   boardTheme: BoardTheme;
   pieceSet: PieceSetId | 'auto';
@@ -52,6 +54,7 @@ export const useSettings = create<Settings>()(
     (set) => ({
       playerName: 'You',
       avatar: 0,
+      photo: '',
       theme: 'club',
       boardTheme: 'auto',
       pieceSet: 'auto',

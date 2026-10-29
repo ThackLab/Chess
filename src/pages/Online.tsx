@@ -137,7 +137,7 @@ function OnlineRow({ g }: { g: OnlineGame }) {
   const mine = !!(s.w && s.b) && toMove === g.me;
   return (
     <button className="today-item" onClick={() => navigate(`/online/${g.code}`)}>
-      <Avatar av={g.me ? avatarOf(s, g.me === 'w' ? 'b' : 'w') : undefined} name={them} />
+      <Avatar av={g.me ? avatarOf(s, g.me === 'w' ? 'b' : 'w') : undefined} photo={g.me ? g.ph?.[g.me === 'w' ? 'b' : 'w'] : undefined} name={them} />
       <span className="ti-body">
         <span className="ti-title">{s.w && s.b ? `vs ${them}` : 'Challenge sent'}</span>
         <span className="ti-sub">
@@ -245,7 +245,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
       <div className="page narrow">
         <PageHead title="You’re invited" back="/friend" />
         <section className="friend-card online-card invite">
-          <Avatar av={avatarOf(s, host)} name={s[host] || '?'} className="fc-avatar big" />
+          <Avatar av={avatarOf(s, host)} photo={g.ph?.[host]} name={s[host] || '?'} className="fc-avatar big" />
           <h2>{free ? `${s[host] || 'A friend'} challenges you` : 'This game has two players'}</h2>
           <p className="muted">
             {free ? `${tcLabel(s.tc)} · you play ${guestSeat === 'w' ? 'White' : 'Black'}` : `${s.w} vs ${s.b}. You can watch it live.`}
@@ -302,7 +302,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
     <div className="game-layout focus-screen play-screen">
       <div className="board-column">
         <div className="player-bar">
-          {s[top] ? <Avatar av={avatarOf(s, top)} name={s[top]} className="pb-avatar" /> : <span className="pb-avatar">?</span>}
+          {s[top] ? <Avatar av={avatarOf(s, top)} photo={g.ph?.[top]} name={s[top]} className="pb-avatar" /> : <span className="pb-avatar">?</span>}
           <b>{name_(top)}</b>
           {started && <Presence code={code} side={top} />}
           <span className="spacer" />
@@ -321,7 +321,11 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
           />
         </div>
         <div className="player-bar">
-          {s[bottom] ? <Avatar av={avatarOf(s, bottom)} name={s[bottom]} className="pb-avatar" /> : <span className="pb-avatar">?</span>}
+          {s[bottom] ? (
+            <Avatar av={avatarOf(s, bottom)} photo={g.ph?.[bottom]} name={s[bottom]} className="pb-avatar" />
+          ) : (
+            <span className="pb-avatar">?</span>
+          )}
           <b>{name_(bottom)}</b>
           {started && <Presence code={code} side={bottom} />}
           <span className="spacer" />

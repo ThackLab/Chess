@@ -1,48 +1,37 @@
 // `#/profile`: your name and avatar. Friends see them in invites, live games and nearby.
-import { useEffect, useMemo, useState } from 'react';
-import { Check, Plus, RefreshCw } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Camera, Check, Type } from 'lucide-react';
 import { PageHead } from '../components/ui';
-import { Avatar, PersonalityIconFor, PersonalityTag } from '../components/Avatar';
-import { PERSONALITIES, VARIANTS, avatarCode, parseAvatar } from '../lib/avatars';
-import type { Credit } from '../lib/avatarArt';
+import { Avatar } from '../components/Avatar';
+import { toast } from '../components/Widgets';
+import { AVATARS, PHOTO, avatarCode, parseAvatar } from '../lib/avatars';
+import { photoFromFile } from '../lib/photo';
 import { useSettings } from '../state/settings';
-
-const BATCH = 24;
-/** Coprime with 1024, so each batch spreads over all the variants. */
-const STEP = 389;
 
 export function ProfilePage() {
   const stored = useSettings((s) => (s.playerName === 'You' ? '' : s.playerName));
   const av = useSettings((s) => s.avatar);
+  const photo = useSettings((s) => s.photo);
   const set = useSettings((s) => s.set);
-  const current = parseAvatar(av);
   const [draft, setDraft] = useState(stored);
-  const [type, setType] = useState(current.kind === 'art' ? current.p : 0);
-  const [start, setStart] = useState(() => (current.kind === 'art' ? current.v : Math.floor(Math.random() * VARIANTS)));
-  const [count, setCount] = useState(BATCH);
-  const [credit, setCredit] = useState<Credit | null>(null);
-  const p = PERSONALITIES[type];
-  const variants = useMemo(() => Array.from({ length: count }, (_, i) => (start + i * STEP) % VARIANTS), [start, count]);
+  const file = useRef<HTMLInputElement>(null);
+  const current = parseAvatar(av);
+  const label = current.kind === 'art' ? current.art.name : current.kind === 'photo' ? 'Your photo' : 'Your initials';
 
-  useEffect(() => {
-    let live = true;
-    void import('../lib/avatarArt').then((m) => live && setCredit(m.styleCredit(p.style)));
-    return () => {
-      live = false;
-    };
-  }, [p.style]);
-
-  const pickType = (i: number) => {
-    setType(i);
-    setStart(Math.floor(Math.random() * VARIANTS));
-    setCount(BATCH);
+  const upload = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      set({ photo: await photoFromFile(f), avatar: PHOTO });
+    } catch {
+      toast('That picture couldn’t be opened. Try another one.');
+    }
   };
 
   return (
     <div className="page narrow profile">
       <PageHead title="Your profile" back="/you" />
       <section className="profile-hero">
-        <Avatar av={av} name={draft || 'Me'} className="profile-avatar" />
+        <Avatar av={av} photo={photo} name={draft || 'Me'} className="profile-avatar" />
         <div className="ph-body">
           <input
             className="profile-name"
@@ -55,103 +44,61 @@ export function ProfilePage() {
             }}
             onBlur={() => setDraft(draft.trim())}
           />
-          {current.kind === 'art' ? (
-            <>
-              <PersonalityTag p={current.personality} />
-              <span className="ph-line">{current.personality.line}</span>
-            </>
-          ) : (
-            <span className="ph-line">Pick a personality below and choose your look.</span>
-          )}
+          <span className="ph-line">{label} · friends see this in invites, games and nearby</span>
         </div>
       </section>
-      <p className="muted small">Friends see your name and avatar in invites, live games and when you’re nearby.</p>
 
-      <h2 className="profile-h">Pick your personality</h2>
-      <div className="type-chips" role="tablist">
-        {PERSONALITIES.map((x, i) => (
-          <button
-            key={x.id}
-            role="tab"
-            aria-selected={i === type}
-            className={`type-chip ${i === type ? 'on' : ''}`}
-            style={i === type ? { borderColor: x.color } : undefined}
-            onClick={() => pickType(i)}
-          >
-            <PersonalityIconFor p={x} size={16} /> {x.name.replace(/^The /, '')}
-          </button>
-        ))}
-      </div>
-
-      <section className="type-card" style={{ borderColor: p.color }}>
-        <span className="tc-icon" style={{ background: `${p.color}22` }}>
-          <PersonalityIconFor p={p} size={26} />
-        </span>
-        <span className="tc-body">
-          <b>{p.name}</b>
-          <span>{p.line}</span>
-        </span>
-      </section>
-
+      <h2 className="profile-h">Pick your avatar</h2>
       <div className="av-grid">
-        {variants.map((v) => {
-          const code = avatarCode(type, v);
+        <button className={`av-pick av-special ${av === PHOTO ? 'on' : ''}`} onClick={() => file.current?.click()} aria-label="Upload your own photo">
+          {photo ? (
+            <Avatar av={PHOTO} photo={photo} name="" className="av-tile" />
+          ) : (
+            <span className="av-initials">
+              <Camera size={28} />
+            </span>
+          )}
+          <span className="av-name">{photo ? 'Change photo' : 'Upload'}</span>
+          {av === PHOTO && <PickedMark />}
+        </button>
+        <button
+          className={`av-pick av-special ${av === 0 ? 'on' : ''}`}
+          onClick={() => set({ avatar: 0 })}
+          aria-label="Use your initials"
+          aria-pressed={av === 0}
+        >
+          <span className="av-initials">{draft ? draft.slice(0, 2).toUpperCase() : <Type size={28} />}</span>
+          <span className="av-name">Initials</span>
+          {av === 0 && <PickedMark />}
+        </button>
+        {AVATARS.map((a, i) => {
+          const code = avatarCode(i);
           const on = code === av;
           return (
-            <button
-              key={v}
-              className={`av-pick ${on ? 'on' : ''}`}
-              style={on ? { borderColor: p.color } : undefined}
-              onClick={() => set({ avatar: code })}
-              aria-label={`${p.name}, look ${v + 1}`}
-              aria-pressed={on}
-            >
+            <button key={a.id} className={`av-pick ${on ? 'on' : ''}`} onClick={() => set({ avatar: code })} aria-label={a.name} aria-pressed={on}>
               <Avatar av={code} name="" className="av-tile" />
-              {on && (
-                <span className="av-check" style={{ background: p.color }}>
-                  <Check size={14} />
-                </span>
-              )}
+              <span className="av-name">{a.name}</span>
+              {on && <PickedMark />}
             </button>
           );
         })}
       </div>
-      <div className="btn-row">
-        <button className="btn" onClick={() => setStart(Math.floor(Math.random() * VARIANTS))}>
-          <RefreshCw size={16} /> Shuffle
-        </button>
-        {count < VARIANTS && (
-          <button className="btn" onClick={() => setCount((c) => Math.min(VARIANTS, c + BATCH))}>
-            <Plus size={16} /> More looks
-          </button>
-        )}
-      </div>
-      {av !== 0 && (
-        <button className="btn ghost block" onClick={() => set({ avatar: 0 })}>
-          Use my initials instead
-        </button>
-      )}
-      {credit && (
-        <p className="credit">
-          {p.name.replace(/^The /, '')} art: “{credit.title}” by {credit.creator}
-          {credit.license && (
-            <>
-              {' · '}
-              {credit.licenseUrl ? (
-                <a href={credit.licenseUrl} target="_blank" rel="noreferrer">
-                  {credit.license}
-                </a>
-              ) : (
-                credit.license
-              )}
-            </>
-          )}
-          {' · drawn with '}
-          <a href="https://www.dicebear.com" target="_blank" rel="noreferrer">
-            DiceBear
-          </a>
-        </p>
-      )}
+      <input ref={file} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => void upload(e.target.files?.[0])} />
+      <p className="credit">
+        Your photo is cropped to a small square and stays on your phone; only friends you’ve added receive it, encrypted. Avatars:{' '}
+        <a href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noreferrer">
+          Fluent Emoji
+        </a>{' '}
+        by Microsoft, MIT licence.
+      </p>
     </div>
+  );
+}
+
+function PickedMark() {
+  return (
+    <span className="av-check">
+      <Check size={14} strokeWidth={3} />
+    </span>
   );
 }

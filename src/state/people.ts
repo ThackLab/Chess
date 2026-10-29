@@ -8,13 +8,14 @@ import { persist } from 'zustand/middleware';
 import { newCode, normaliseCode, relay } from '../lib/online/relay';
 import { useOnline, type Clock } from './online';
 import { useSettings } from './settings';
-import { cleanAvatar } from '../lib/avatars';
+import { PHOTO, cleanAvatar, cleanPhoto } from '../lib/avatars';
 
 export interface Person {
   id: string;
   name: string;
-  /** Their avatar (src/lib/avatars.ts), as they last sent it. */
+  /** Their avatar (src/lib/avatars.ts), as they last sent it, and their photo if it's one. */
   av?: number;
+  ph?: string;
   addedAt: number;
 }
 
@@ -22,6 +23,8 @@ interface From {
   id: string;
   name: string;
   av?: number;
+  /** Their photo, when av is PHOTO. */
+  ph?: string;
 }
 
 /** What travels through an inbox. */
@@ -48,7 +51,7 @@ export function parseNote(x: unknown, now = Date.now()): Note | null {
   const base = {
     v: 1 as const,
     mid: n.mid.slice(0, 16),
-    from: { id: f.id, name: f.name.trim().slice(0, MAX_NAME) || 'Player', av: cleanAvatar(f.av) },
+    from: { id: f.id, name: f.name.trim().slice(0, MAX_NAME) || 'Player', av: cleanAvatar(f.av), ph: cleanPhoto(f.ph) },
     at: n.at,
   };
   if (n.t === 'hello') return { ...base, t: 'hello', ...(n.upd === true ? { upd: true } : {}) };
@@ -71,6 +74,12 @@ export function parseNote(x: unknown, now = Date.now()): Note | null {
 const myName = () => {
   const n = useSettings.getState().playerName;
   return n && n !== 'You' ? n : '';
+};
+
+/** This player's name and avatar as they travel (the photo only when it's the avatar). */
+const myLook = (): Omit<From, 'id'> => {
+  const { avatar, photo } = useSettings.getState();
+  return { name: myName() || 'Player', av: avatar || undefined, ph: avatar === PHOTO && photo ? photo : undefined };
 };
 
 interface PeopleStore {
@@ -105,7 +114,7 @@ export const usePeople = create<PeopleStore>()(
     (set, get) => {
       const close = (mid: string) =>
         set((st) => ({ incoming: st.incoming.filter((n) => n.mid !== mid), done: [...st.done.filter((d) => d !== mid), mid].slice(-200) }));
-      const from = (): From => ({ id: get().ensureMe(), name: myName() || 'Player', av: useSettings.getState().avatar || undefined });
+      const from = (): From => ({ id: get().ensureMe(), ...myLook() });
       return {
         me: null,
         people: [],
@@ -149,8 +158,8 @@ export const usePeople = create<PeopleStore>()(
           const st = get();
           if (!n || n.from.id === st.me || st.done.includes(n.mid) || st.incoming.some((x) => x.mid === n.mid)) return;
           const known = st.people.find((p) => p.id === n.from.id);
-          if (known && (known.name !== n.from.name || known.av !== n.from.av)) {
-            set((s) => ({ people: s.people.map((p) => (p.id === known.id ? { ...p, name: n.from.name, av: n.from.av } : p)) }));
+          if (known && (known.name !== n.from.name || known.av !== n.from.av || known.ph !== n.from.ph)) {
+            set((s) => ({ people: s.people.map((p) => (p.id === known.id ? { ...p, name: n.from.name, av: n.from.av, ph: n.from.ph } : p)) }));
           }
           // A friend's new look is applied quietly; from someone who isn't a friend it's ignored.
           if (n.t === 'hello' && (known || n.upd)) return close(n.mid);
@@ -167,7 +176,7 @@ export const usePeople = create<PeopleStore>()(
           if (!n || n.t !== 'invite') return null;
           close(mid);
           if (!get().people.some((p) => p.id === n.from.id)) {
-            set((st) => ({ people: [...st.people, { id: n.from.id, name: n.from.name, av: n.from.av, addedAt: Date.now() }] }));
+            set((st) => ({ people: [...st.people, { id: n.from.id, name: n.from.name, av: n.from.av, ph: n.from.ph, addedAt: Date.now() }] }));
           }
           void relay.clearInbox(get().ensureMe());
           return n.code;
@@ -195,7 +204,7 @@ export const usePeople = create<PeopleStore>()(
 export function sendProfile() {
   const st = usePeople.getState();
   if (!st.me || !st.people.length) return;
-  const from: From = { id: st.me, name: myName() || 'Player', av: useSettings.getState().avatar || undefined };
+  const from: From = { id: st.me, ...myLook() };
   for (const p of st.people) void relay.send(p.id, { v: 1, t: 'hello', upd: true, mid: newCode(), from, at: Date.now() }, false);
 }
 
@@ -212,7 +221,7 @@ export function useInboxSync() {
     });
     let timer: ReturnType<typeof setTimeout> | undefined;
     const unsub = useSettings.subscribe((s, prev) => {
-      if (s.playerName === prev.playerName && s.avatar === prev.avatar) return;
+      if (s.playerName === prev.playerName && s.avatar === prev.avatar && s.photo === prev.photo) return;
       clearTimeout(timer);
       timer = setTimeout(sendProfile, 4000);
     });

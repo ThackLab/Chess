@@ -118,6 +118,11 @@ describe('friends and invites', () => {
     // From a stranger: no "added you" pop-up.
     usePeople.getState().receive({ v: 1, t: 'hello', upd: true, mid: 'u2', from: { id: 'B0B0000000', name: 'Bob' }, at: Date.now() });
     expect(usePeople.getState().incoming).toHaveLength(0);
+    // A photo travels with the avatar, and anything that isn't a small JPEG is dropped.
+    const ph = 'data:image/jpeg;base64,AAAA';
+    usePeople.getState().receive({ v: 1, t: 'hello', upd: true, mid: 'u3', from: { id: ALEX, name: 'Alex', av: 1, ph }, at: Date.now() });
+    expect(usePeople.getState().people[0]).toMatchObject({ av: 1, ph });
+    expect(parseNote(invite({ from: { id: ALEX, name: 'Alex', av: 1, ph: 'data:text/html,<b>' } }))!.from.ph).toBeUndefined();
     // Junk avatars are dropped.
     expect(parseNote(invite({ from: { id: ALEX, name: 'Alex', av: 'x' } }))!.from.av).toBeUndefined();
   });

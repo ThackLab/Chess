@@ -92,7 +92,7 @@ async function open(key: CryptoKey, payload: Uint8Array): Promise<unknown> {
   }
 }
 
-type Listener = (kind: 'state' | 'beat' | 'inbox', data: unknown, from?: string) => void;
+type Listener = (kind: 'state' | 'beat' | 'inbox' | 'profile', data: unknown, from?: string) => void;
 
 const inboxCode = (friendCode: string) => `inbox:${friendCode}`;
 
@@ -142,7 +142,7 @@ class Relay {
   }
 
   private async dispatch(topic: string, payload: Uint8Array) {
-    const m = /^(grandmasters\/v1\/[0-9a-f]+)\/(s|b|i)(?:\/(\w))?$/.exec(topic);
+    const m = /^(grandmasters\/v1\/[0-9a-f]+)\/(s|b|i|p)(?:\/(\w))?$/.exec(topic);
     if (!m) return;
     const base = m[1];
     const key = this.keys.get(base);
@@ -150,7 +150,8 @@ class Relay {
     if (!key || !ls?.size || !payload.length) return;
     const data = await open(key, payload);
     if (data === null) return;
-    ls.forEach((l) => l(m[2] === 's' ? 'state' : m[2] === 'b' ? 'beat' : 'inbox', data, m[3]));
+    const kind = m[2] === 's' ? 'state' : m[2] === 'b' ? 'beat' : m[2] === 'p' ? 'profile' : 'inbox';
+    ls.forEach((l) => l(kind, data, m[3]));
   }
 
   private async listen(code: string, subtopics: string[], listener: Listener): Promise<() => void> {
@@ -172,9 +173,16 @@ class Relay {
     };
   }
 
-  /** Listens to a game's state and heartbeats. */
+  /** Listens to a game's state, heartbeats and the players' photos. */
   join(code: string, listener: Listener): Promise<() => void> {
-    return this.listen(code, ['s', 'b/+'], listener);
+    return this.listen(code, ['s', 'b/+', 'p/+'], listener);
+  }
+
+  /** A player's photo for a game, kept on the relay so the opponent gets it whenever they open the game. */
+  async publishProfile(code: string, color: string, data: unknown) {
+    this.start();
+    const { topic, key } = await channel(code);
+    this.publishRetained(`${topic}/p/${color}`, await seal(key, data));
   }
 
   /** Listens to this player's inbox. */

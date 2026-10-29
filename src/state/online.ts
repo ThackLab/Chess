@@ -15,6 +15,7 @@ import { saveGame, type GameRecord, type GameResult } from '../lib/storage/db';
 import { playSound, soundForSan } from '../lib/sound';
 import { canMate, ruleResult } from './game';
 import { useSettings } from './settings';
+import { PHOTO, cleanPhoto } from '../lib/avatars';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -56,6 +57,8 @@ export interface OnlineGame {
   turnAt: number;
   createdAt: number;
   savedId?: string;
+  /** The players' photos, for those whose avatar is one (they travel separately from the game). */
+  ph?: Partial<Record<Color, string>>;
 }
 
 const other = (c: Color): Color => (c === 'w' ? 'b' : 'w');
@@ -163,6 +166,7 @@ interface OnlineStore {
   /** Offers a rematch (colours swapped); returns the new game's code. */
   rematch: (code: string, name: string) => string | null;
   remove: (code: string) => void;
+  setPhoto: (code: string, side: Color, ph: string | undefined) => void;
 }
 
 export const useOnline = create<OnlineStore>()(
@@ -333,6 +337,9 @@ export const useOnline = create<OnlineStore>()(
           return next;
         },
         remove: (code) => set((st) => ({ games: st.games.filter((g) => g.code !== code) })),
+        setPhoto: (code, side, ph) => {
+          if (find(code)?.ph?.[side] !== ph) put(code, (x) => ({ ...x, ph: { ...x.ph, [side]: ph } }));
+        },
       };
     },
     { name: 'grandmasters.online', version: 1 },
@@ -365,7 +372,9 @@ export function useOnlineSync() {
     const offs: Promise<() => void>[] = codes.split(',').map((code) =>
       relay.join(code, (kind, data, from) => {
         if (kind === 'state') useOnline.getState().receive(code, data);
-        else if (from === 'w' || from === 'b') usePresence.getState().mark(code, from);
+        else if (kind === 'profile') {
+          if (from === 'w' || from === 'b') useOnline.getState().setPhoto(code, from, cleanPhoto((data as { ph?: unknown } | null)?.ph));
+        } else if (from === 'w' || from === 'b') usePresence.getState().mark(code, from);
       }),
     );
     return () => {
@@ -374,10 +383,12 @@ export function useOnlineSync() {
   }, [codes]);
 }
 
-/** While a game screen is open: tell the opponent we're here, every few seconds. */
+/** While a game screen is open: tell the opponent we're here, every few seconds (and send our photo, once). */
 export function useHeartbeat(code: string, me: Color | null | undefined) {
   useEffect(() => {
     if (!me) return;
+    const { avatar, photo } = useSettings.getState();
+    if (avatar === PHOTO && photo) void relay.publishProfile(code, me, { v: 1, ph: photo });
     const beat = () => {
       if (document.visibilityState === 'visible') void relay.beat(code, me, { t: Date.now() });
     };

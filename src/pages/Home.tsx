@@ -243,7 +243,7 @@ export function HomePage() {
 function FriendCard({ o }: { o: Opponent }) {
   return (
     <button className="fr-card" onClick={() => navigate(o.href)}>
-      <Avatar av={o.av} name={o.name} className="fc-avatar" />
+      <Avatar av={o.av} photo={o.ph} name={o.name} className="fc-avatar" />
       <b>{o.name}</b>
       <span className={`fc-sub ${o.yourMove ? 'go' : ''}`}>{o.status}</span>
       <span className={`btn fc-btn ${o.yourMove ? 'primary' : ''}`}>{o.yourMove ? 'Your move' : o.active ? 'Open' : 'Challenge'}</span>

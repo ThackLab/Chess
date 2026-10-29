@@ -1,273 +1,112 @@
 // Avatars. Each is a single number, small enough to travel anywhere a name
 // does (an invite, a live game, a Bluetooth advert):
-//   0                 the player's initials
-//   4096 + p·1024 + v personality p (PERSONALITIES[p]), variant v (0–1023)
-// Everything else is read as initials. The art is drawn on the device by
-// DiceBear (src/lib/avatarArt.ts); nothing is downloaded.
-// PERSONALITIES only ever grows at the end, so every number keeps its picture.
+//   0      the player's initials
+//   1      their own photo (which travels separately: see state/people.ts and state/online.ts)
+//   2 + i  AVATARS[i]
+// AVATARS only ever grows at the end, so every number keeps its picture. The
+// pictures are Microsoft's Fluent Emoji (MIT), in public/avatars.
 
-export type ArtStyle =
-  | 'adventurer'
-  | 'avataaars'
-  | 'big-ears'
-  | 'big-smile'
-  | 'bottts'
-  | 'croodles'
-  | 'dylan'
-  | 'fun-emoji'
-  | 'lorelei'
-  | 'micah'
-  | 'miniavs'
-  | 'notionists'
-  | 'open-peeps'
-  | 'personas'
-  | 'pixel-art';
-
-export type PersonalityIcon =
-  | 'flame'
-  | 'shield'
-  | 'sparkles'
-  | 'cap'
-  | 'cpu'
-  | 'zap'
-  | 'leaf'
-  | 'wand'
-  | 'hourglass'
-  | 'dice'
-  | 'heart'
-  | 'star'
-  | 'shuffle'
-  | 'ghost'
-  | 'crown'
-  | 'gamepad';
-
-export interface Personality {
+export interface AvatarArt {
   id: string;
   name: string;
-  /** Who they are at the board, in a line. */
-  line: string;
-  icon: PersonalityIcon;
-  /** The accent for this type's chip and badge. */
-  color: string;
-  style: ArtStyle;
-  /** DiceBear options that give the type its look (expressions, accessories...). */
-  options: Record<string, unknown>;
-  /** Background gradient colours. */
-  bg: string[];
+  /** The tile behind it: a gradient from one colour to the other. */
+  bg: [string, string];
 }
 
-export const PERSONALITIES: Personality[] = [
-  {
-    id: 'berserker',
-    name: 'The Berserker',
-    line: 'Attacks first. Asks questions never.',
-    icon: 'flame',
-    color: '#ff5a36',
-    style: 'avataaars',
-    options: {
-      eyebrows: ['angry', 'angryNatural', 'upDown'],
-      eyes: ['squint', 'default', 'surprised'],
-      mouth: ['screamOpen', 'grimace', 'serious'],
-      accessories: ['eyepatch', 'sunglasses'],
-      accessoriesProbability: 30,
-      facialHair: ['beardMajestic', 'beardMedium', 'moustacheMagnum'],
-      facialHairProbability: 40,
-    },
-    bg: ['ff4d4d', 'ff8c1a', 'c81d25', 'ffb703'],
-  },
-  {
-    id: 'fortress',
-    name: 'The Fortress',
-    line: 'Castles early, trades nothing, waits for you to crack.',
-    icon: 'shield',
-    color: '#7f9cb8',
-    style: 'micah',
-    options: { mouth: ['frown', 'smirk', 'nervous'], eyebrows: ['down'], eyes: ['eyes', 'round', 'eyesShadow'], glassesProbability: 20 },
-    bg: ['5b7c99', '8fa9c0', '3d5a73', 'b8c7d6'],
-  },
-  {
-    id: 'gambiteer',
-    name: 'The Gambiteer',
-    line: 'Pawns are snacks. Sacrifices are a lifestyle.',
-    icon: 'sparkles',
-    color: '#ffb703',
-    style: 'avataaars',
-    options: {
-      eyes: ['hearts', 'happy', 'winkWacky'],
-      eyebrows: ['raisedExcited', 'raisedExcitedNatural'],
-      mouth: ['smile', 'twinkle', 'tongue'],
-      clothing: ['graphicShirt'],
-      clothingGraphic: ['diamond', 'pizza', 'bat', 'skull'],
-    },
-    bg: ['ffd166', 'f78c6b', 'ef476f', 'ffe29a'],
-  },
-  {
-    id: 'professor',
-    name: 'The Professor',
-    line: 'Has read every opening book. Twice. Footnotes too.',
-    icon: 'cap',
-    color: '#d9b46a',
-    style: 'notionists',
-    options: { glassesProbability: 100, gesture: ['point', 'pointLongArm', 'ok', 'hand'], gestureProbability: 60, beardProbability: 40 },
-    bg: ['f1e3c8', 'e8d5b0', 'd9c39a', 'fff4dc'],
-  },
-  {
-    id: 'engine',
-    name: 'The Engine',
-    line: 'Calculates thirty moves deep. Feels nothing.',
-    icon: 'cpu',
-    color: '#22b8e6',
-    style: 'bottts',
-    options: {
-      eyes: ['robocop', 'sensor', 'glow', 'frame1', 'frame2', 'eva', 'shade01'],
-      top: ['radar', 'antenna', 'lights', 'glowingBulb01', 'glowingBulb02'],
-      topProbability: 100,
-      texture: ['circuits', 'dots'],
-      textureProbability: 50,
-    },
-    bg: ['00b4d8', '0077b6', '023e8a', '48cae4'],
-  },
-  {
-    id: 'blitz',
-    name: 'The Blitz Demon',
-    line: 'Premoves everything. Flags you with a tenth of a second left.',
-    icon: 'zap',
-    color: '#ff2d8a',
-    style: 'fun-emoji',
-    options: { eyes: ['shades', 'stars', 'pissed', 'wink2'], mouth: ['shout', 'tongueOut', 'smileTeeth', 'drip', 'smileLol'] },
-    bg: ['ff006e', '8338ec', '3a86ff', 'fb5607'],
-  },
-  {
-    id: 'zen',
-    name: 'The Zen Master',
-    line: 'Never panics. Breathes slowly with one second on the clock.',
-    icon: 'leaf',
-    color: '#52b788',
-    style: 'dylan',
-    options: { mood: ['neutral', 'hopeful', 'happy'] },
-    bg: ['95d5b2', 'b7e4c7', '74c69d', 'd8f3dc'],
-  },
-  {
-    id: 'trickster',
-    name: 'The Trickster',
-    line: 'Every move is a trap. Some of them even work.',
-    icon: 'wand',
-    color: '#b46bff',
-    style: 'big-smile',
-    options: {
-      eyes: ['winking', 'confused', 'cheery', 'starstruck'],
-      mouth: ['awkwardSmile', 'kawaii', 'gapSmile', 'teethSmile'],
-      accessories: ['catEars', 'clownNose', 'sunglasses', 'sailormoonCrown', 'mustache'],
-      accessoriesProbability: 80,
-    },
-    bg: ['9b5de5', 'f15bb5', '00bbf9', '00f5d4'],
-  },
-  {
-    id: 'grinder',
-    name: 'The Grinder',
-    line: 'Will play 120 moves to win a pawn ending, and enjoy every one.',
-    icon: 'hourglass',
-    color: '#b08968',
-    style: 'open-peeps',
-    options: { face: ['driven', 'serious', 'solemn', 'tired', 'calm', 'suspicious'], facialHairProbability: 50, maskProbability: 0 },
-    bg: ['a68a64', '7f5539', 'b08968', 'ddb892'],
-  },
-  {
-    id: 'hustler',
-    name: 'The Park Hustler',
-    line: 'Trash talk, bullet chess and a pocket full of cash.',
-    icon: 'dice',
-    color: '#2ec4b6',
-    style: 'personas',
-    options: {
-      eyes: ['sunglasses', 'wink', 'happy'],
-      mouth: ['smirk', 'bigSmile', 'smile'],
-      hair: ['cap', 'beanie', 'fade', 'curlyHighTop', 'mohawk', 'buzzcut'],
-      facialHairProbability: 50,
-    },
-    bg: ['2ec4b6', 'ff9f1c', 'cbf3f0', 'ffbf69'],
-  },
-  {
-    id: 'romantic',
-    name: 'The Romantic',
-    line: 'Plays like it’s 1851: open lines, wild sacrifices, pure style.',
-    icon: 'heart',
-    color: '#ff8fb8',
-    style: 'adventurer',
-    options: { features: ['blush', 'mustache', 'birthmark'], featuresProbability: 60, earringsProbability: 30 },
-    bg: ['ffafcc', 'ffc8dd', 'cdb4db', 'bde0fe'],
-  },
-  {
-    id: 'prodigy',
-    name: 'The Prodigy',
-    line: 'Eleven years old. Already better than you.',
-    icon: 'star',
-    color: '#4cc3ff',
-    style: 'miniavs',
-    options: { eyes: ['confident', 'happy'], mouth: ['default', 'missingTooth'], mustacheProbability: 0, glassesProbability: 30 },
-    bg: ['8ecae6', '219ebc', 'ffb703', 'a2d2ff'],
-  },
-  {
-    id: 'wildcard',
-    name: 'The Wildcard',
-    line: 'Nobody knows what they’ll play next. Including them.',
-    icon: 'shuffle',
-    color: '#ffbe0b',
-    style: 'croodles',
-    options: {},
-    bg: ['ffbe0b', 'fb5607', 'ff006e', '8338ec', '3a86ff'],
-  },
-  {
-    id: 'gremlin',
-    name: 'The Gremlin',
-    line: 'Lives in your time trouble. Feeds on blunders.',
-    icon: 'ghost',
-    color: '#57cc99',
-    style: 'big-ears',
-    options: {},
-    bg: ['80ed99', '57cc99', '38a3a5', 'c7f9cc'],
-  },
-  {
-    id: 'classicist',
-    name: 'The Classicist',
-    line: 'Opens 1.e4, says “good game”, means it.',
-    icon: 'crown',
-    color: '#d4a373',
-    style: 'lorelei',
-    options: { glassesProbability: 30, hairAccessoriesProbability: 20, frecklesProbability: 20 },
-    bg: ['e9edc9', 'fefae0', 'faedcd', 'd4a373'],
-  },
-  {
-    id: 'arcade',
-    name: 'The Arcade Boss',
-    line: 'Learned chess from a cartridge. Plays like the final boss.',
-    icon: 'gamepad',
-    color: '#c77dff',
-    style: 'pixel-art',
-    options: { hatProbability: 40, glassesProbability: 40, accessoriesProbability: 30 },
-    bg: ['3a0ca3', '7209b7', 'f72585', '4cc9f0'],
-  },
+const A = (id: string, name: string, a: string, b: string): AvatarArt => ({ id, name, bg: [a, b] });
+
+export const AVATARS: AvatarArt[] = [
+  A('fox', 'Fox', '#ffb36b', '#ff7a3d'),
+  A('panda', 'Panda', '#d9f2e3', '#8fd3b0'),
+  A('lion', 'Lion', '#ffd36b', '#f59e2b'),
+  A('tiger_face', 'Tiger', '#ffc46b', '#ff8a3d'),
+  A('cat_face', 'Cat', '#ffe08a', '#ffb347'),
+  A('dog_face', 'Dog', '#f6d7b0', '#d9a36b'),
+  A('unicorn', 'Unicorn', '#f9c6ff', '#b79bff'),
+  A('dragon_face', 'Dragon', '#8be08b', '#2f9e5a'),
+  A('owl', 'Owl', '#c9b38b', '#7d6142'),
+  A('penguin', 'Penguin', '#bfe6ff', '#5aaee8'),
+  A('frog', 'Frog', '#c6f28b', '#6cc24a'),
+  A('octopus', 'Octopus', '#ffb3c7', '#ff6f91'),
+  A('shark', 'Shark', '#9fd8ff', '#3a8fd6'),
+  A('t_rex', 'T. rex', '#b7e66b', '#4f9e3a'),
+  A('wolf', 'Wolf', '#c9d2e0', '#6f7f99'),
+  A('ninja', 'Ninja', '#5a5f73', '#20232e'),
+  A('woman_mage', 'Mage', '#c3a6ff', '#6a4bd8'),
+  A('man_vampire', 'Vampire', '#c9283b', '#3b0a1a'),
+  A('woman_superhero', 'Superhero', '#ff6b6b', '#3a6bff'),
+  A('man_zombie', 'Zombie', '#a6d68b', '#4a7d3a'),
+  A('princess', 'Princess', '#ffd1e8', '#ff8fc4'),
+  A('prince', 'Prince', '#ffe29a', '#d9a23b'),
+  A('astronaut', 'Astronaut', '#4a5bd8', '#141a4a'),
+  A('detective', 'Detective', '#d9c3a0', '#7a5f3d'),
+  A('alien', 'Alien', '#b6f2a6', '#3fbf7a'),
+  A('robot', 'Robot', '#b8d4e8', '#5f86a6'),
+  A('ghost', 'Ghost', '#d4c8ff', '#7a6be0'),
+  A('skull', 'Skull', '#4a4a52', '#141418'),
+  A('goblin', 'Goblin', '#ff8a6b', '#b8322a'),
+  A('alien_monster', 'Space invader', '#c58bff', '#5a2ac2'),
+  A('clown_face', 'Clown', '#ffe36b', '#ff5f7a'),
+  A('jack_o_lantern', 'Pumpkin', '#ffa94d', '#3b1f0a'),
+  A('smiling_face_with_sunglasses', 'Cool', '#7ad3ff', '#2d7fe0'),
+  A('nerd_face', 'Nerd', '#fff2a6', '#ffcf3d'),
+  A('face_with_monocle', 'Monocle', '#e8dcc0', '#a68a5a'),
+  A('cowboy_hat_face', 'Cowboy', '#f2c98b', '#b8743a'),
+  A('exploding_head', 'Mind blown', '#ffb36b', '#e8413d'),
+  A('partying_face', 'Party', '#a6f0ff', '#ff8fd8'),
+  A('star_struck', 'Star-struck', '#fff08a', '#ffb800'),
+  A('smiling_face_with_horns', 'Devil', '#c86bff', '#5a1a9e'),
+  A('crown', 'Crown', '#ffe9a6', '#e0a62b'),
+  A('trophy', 'Trophy', '#fff0b3', '#f2b705'),
+  A('fire', 'Fire', '#ffb36b', '#e8302a'),
+  A('high_voltage', 'Lightning', '#3a3a8a', '#12123a'),
+  A('gem_stone', 'Gem', '#b3e6ff', '#4a8ff0'),
+  A('rocket', 'Rocket', '#2a2f6b', '#0b0e2a'),
+  A('chess_pawn', 'Pawn', '#eeeed2', '#769656'),
+  A('brain', 'Brain', '#ffd1dc', '#ff8fab'),
 ];
 
-const ART_BASE = 4096;
-export const VARIANTS = 1024;
+export const PHOTO = 1;
+const BASE = 2;
 
-export const avatarCode = (personality: number, variant: number) => ART_BASE + personality * VARIANTS + (variant % VARIANTS);
+export const avatarCode = (i: number) => BASE + i;
 
-export type ParsedAvatar = { kind: 'initials' } | { kind: 'art'; p: number; v: number; personality: Personality };
+export type ParsedAvatar = { kind: 'initials' } | { kind: 'photo' } | { kind: 'art'; art: AvatarArt; url: string };
+
+/** The avatars app 1.5 drew (codes from 4096 up): each of its 16 styles gets the closest one here. */
+const LEGACY = [
+  'fire',
+  'ninja',
+  'gem_stone',
+  'face_with_monocle',
+  'robot',
+  'high_voltage',
+  'panda',
+  'clown_face',
+  'owl',
+  'smiling_face_with_sunglasses',
+  'unicorn',
+  'star_struck',
+  'partying_face',
+  'goblin',
+  'crown',
+  'alien_monster',
+];
+
+const urlFor = (id: string) => (typeof document === 'undefined' ? `avatars/${id}.webp` : new URL(`avatars/${id}.webp`, document.baseURI).href);
 
 export function parseAvatar(code: unknown): ParsedAvatar {
-  if (typeof code !== 'number' || !Number.isInteger(code) || code < ART_BASE || code > 0xffff) return { kind: 'initials' };
-  const p = Math.floor((code - ART_BASE) / VARIANTS);
-  const personality = PERSONALITIES[p];
-  return personality ? { kind: 'art', p, v: (code - ART_BASE) % VARIANTS, personality } : { kind: 'initials' };
+  if (typeof code !== 'number' || !Number.isInteger(code) || code < 0 || code > 0xffff) return { kind: 'initials' };
+  if (code === PHOTO) return { kind: 'photo' };
+  let art = code >= BASE ? AVATARS[code - BASE] : undefined;
+  if (code >= 4096) art = AVATARS.find((a) => a.id === LEGACY[Math.floor((code - 4096) / 1024)]);
+  return art ? { kind: 'art', art, url: urlFor(art.id) } : { kind: 'initials' };
 }
 
 /** A valid avatar number to send or keep, or undefined. */
 export const cleanAvatar = (code: unknown): number | undefined =>
   typeof code === 'number' && Number.isInteger(code) && code >= 0 && code <= 0xffff ? code : undefined;
 
-export const personalityOf = (code: unknown): Personality | null => {
-  const a = parseAvatar(code);
-  return a.kind === 'art' ? a.personality : null;
-};
+/** A photo as it travels: a small JPEG data URL, or undefined if it isn't one. */
+export const cleanPhoto = (x: unknown): string | undefined =>
+  typeof x === 'string' && x.length <= 16_000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x) ? x : undefined;

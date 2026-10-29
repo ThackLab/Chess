@@ -5,7 +5,6 @@ import { navigate } from '../lib/router';
 import { vibrate } from '../lib/platform';
 import { playSound } from '../lib/sound';
 import { Avatar } from './Avatar';
-import { personalityOf } from '../lib/avatars';
 import { usePeople } from '../state/people';
 import { tcLabel } from '../state/online';
 
@@ -25,7 +24,7 @@ export function InvitePopup() {
   const name = n.from.name;
   return (
     <div className="invite-pop" role="alertdialog" aria-live="assertive" aria-label={n.t === 'invite' ? `${name} challenges you` : name}>
-      <Avatar av={n.from.av} name={name} className="fc-avatar invite-av" />
+      <Avatar av={n.from.av} photo={n.from.ph} name={name} className="fc-avatar invite-av" />
       {n.t === 'invite' ? (
         <>
           <span className="ip-body">
@@ -33,7 +32,7 @@ export function InvitePopup() {
               <Swords size={16} /> {name} challenges you
             </b>
             <span>
-              {personalityOf(n.from.av)?.name ?? 'Live game'} · {n.tc ? tcLabel(n.tc) : 'no clock'}
+              Live game · {n.tc ? tcLabel(n.tc) : 'no clock'}
               {known ? '' : ' · not in your friends yet'}
             </span>
           </span>

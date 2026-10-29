@@ -353,14 +353,16 @@ export function ReviewPage({ gameId }: { gameId: string }) {
   const top = orientation === 'white' ? 'b' : 'w';
   const bottom = top === 'w' ? 'b' : 'w';
   const info = (c: 'w' | 'b') => (c === 'w' ? game.white : game.black);
-  const myAvatar = useSettings.getState().avatar;
+  const me = useSettings.getState();
   const summary = (c: 'w' | 'b') => (review ? (c === 'w' ? review.white : review.black) : null);
   const bar = (c: 'w' | 'b') => {
     const p = info(c);
     const s = summary(c);
     return (
       <PlayerBar
-        avatar={p.isUser ? <AvatarFace av={myAvatar} name={p.name || 'You'} /> : monogram(p.name || (c === 'w' ? 'White' : 'Black'))}
+        avatar={
+          p.isUser ? <AvatarFace av={me.avatar} photo={me.photo} name={p.name || 'You'} /> : monogram(p.name || (c === 'w' ? 'White' : 'Black'))
+        }
         tint={undefined}
         name={p.name}
         elo={p.elo}

@@ -250,7 +250,7 @@ export function GamePage() {
   const userName = settings.playerName || 'You';
   const playerFor = (c: 'w' | 'b') =>
     c === userColor
-      ? { avatar: <AvatarFace av={settings.avatar} name={userName || 'You'} />, tint: undefined, name: userName, elo: rating }
+      ? { avatar: <AvatarFace av={settings.avatar} photo={settings.photo} name={userName || 'You'} />, tint: undefined, name: userName, elo: rating }
       : { avatar: monogram(bot.name), tint: undefined, name: bot.name, elo: bot.elo };
   const playing = game.status === 'playing';
   const userToMove = playing && chess.turn() === userColor;

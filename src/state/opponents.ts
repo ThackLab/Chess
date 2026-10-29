@@ -9,6 +9,7 @@ export interface Opponent {
   key: string;
   name: string;
   av?: number;
+  ph?: string;
   /** Where tapping the card goes. */
   href: string;
   status: string;
@@ -24,7 +25,7 @@ export function useOpponents(): Opponent[] {
   const people = usePeople((s) => s.people);
   return useMemo(() => {
     // Games by link carry no avatar: use the friend's, if they're one.
-    const avByName = new Map(people.filter((p) => p.av).map((p) => [p.name.toLowerCase(), p.av]));
+    const byName = new Map(people.map((p) => [p.name.toLowerCase(), p]));
     const out = new Map<string, Opponent>();
     const add = (o: Opponent) => {
       const k = o.name.toLowerCase();
@@ -42,7 +43,8 @@ export function useOpponents(): Opponent[] {
       add({
         key: `o-${g.code}`,
         name: them,
-        av: avatarOf(g.s, g.me === 'w' ? 'b' : 'w') ?? avByName.get(them.toLowerCase()),
+        av: avatarOf(g.s, g.me === 'w' ? 'b' : 'w') ?? byName.get(them.toLowerCase())?.av,
+        ph: g.ph?.[g.me === 'w' ? 'b' : 'w'] ?? byName.get(them.toLowerCase())?.ph,
         href: `/online/${g.code}`,
         status: rematchForYou ? 'Wants a rematch' : g.s.r ? 'Game over' : yourMove ? 'Your move' : 'Their move',
         yourMove: yourMove || rematchForYou,
@@ -57,7 +59,8 @@ export function useOpponents(): Opponent[] {
       add({
         key: `f-${g.id}`,
         name: them,
-        av: avByName.get(them.toLowerCase()),
+        av: byName.get(them.toLowerCase())?.av,
+        ph: byName.get(them.toLowerCase())?.ph,
         href: `/friend/${g.id}`,
         status: g.result ? 'Game over' : yourMove ? 'Your move (by link)' : 'Their move (by link)',
         yourMove,

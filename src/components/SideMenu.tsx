@@ -23,7 +23,6 @@ import {
 import { Logo } from './Widgets';
 import { navigate } from '../lib/router';
 import { Avatar } from './Avatar';
-import { personalityOf } from '../lib/avatars';
 import { useSettings } from '../state/settings';
 import { useProfile } from '../state/profile';
 import { liveStreak, useLearn } from '../state/learn';
@@ -80,7 +79,7 @@ export function SideMenu({ open, onClose, path }: { open: boolean; onClose: () =
 function MenuBody({ path, onClose }: { path: string; onClose: () => void }) {
   const name = useSettings((s) => s.playerName);
   const av = useSettings((s) => s.avatar);
-  const type = personalityOf(av);
+  const photo = useSettings((s) => s.photo);
   const rating = useProfile((s) => s.rating);
   const puzzleRating = useLearn((s) => s.rating);
   const yourMoves = useOpponents().filter((o) => o.yourMove).length;
@@ -134,11 +133,11 @@ function MenuBody({ path, onClose }: { path: string; onClose: () => void }) {
     <>
       <div className="drawer-head">
         <button className="drawer-me" onClick={() => go('/profile')}>
-          <Avatar av={av} name={name && name !== 'You' ? name : 'Me'} className="me-avatar" />
+          <Avatar av={av} photo={photo} name={name && name !== 'You' ? name : 'Me'} className="me-avatar" />
           <span className="dm-body">
             <b>{name && name !== 'You' ? name : 'Set up your profile'}</b>
             <span>
-              {type ? `${type.name} · ` : ''}Bots {rating} · Puzzles {puzzleRating}
+              Bots {rating} · Puzzles {puzzleRating}
             </span>
           </span>
         </button>
