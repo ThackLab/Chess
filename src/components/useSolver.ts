@@ -4,6 +4,7 @@ import { Chess, type Color } from 'chess.js';
 import { getAnalysisEngine } from '../lib/engine/manager';
 import { legalDests, moveToUci, playUci, sanLine } from '../lib/chess/utils';
 import { hintsFor, refutationText } from '../lib/review/hints';
+import { acceptsAlternative } from '../lib/learn/judge';
 import { expectedFor } from '../lib/review/winprob';
 import { playSound, soundForSan } from '../lib/sound';
 import type { PromotionPiece } from './Board';
@@ -108,6 +109,8 @@ export function useSolver(input: SolverInput | null) {
   const onMove = useCallback(
     async (from: string, to: string, promotion?: PromotionPiece) => {
       if (!input || !base || !solver || state !== 'solve') return;
+      // Only on the solver's turn: never while the reply is on its way.
+      if (ply % 2 === 1) return;
       const t = token.current;
       const c = new Chess(base);
       for (const u of input.line.slice(0, ply)) playUci(c, u);
@@ -166,9 +169,16 @@ export function useSolver(input: SolverInput | null) {
         engine.analyse({ fen: right.fen(), limits: { depth: 14, movetime: 2500 } }),
       ]);
       if (token.current !== t) return;
-      const epMine = mine.lines[0] ? expectedFor(mine.lines[0].score, solver) : c.isCheckmate() ? 1 : 0;
-      const epBest = best.lines[0] ? expectedFor(best.lines[0].score, solver) : 1;
-      if (c.isCheckmate() || (ply > 0 && epMine >= epBest - 0.03) || (ply === 0 && epMine >= epBest - 0.01)) {
+      const accepted = acceptsAlternative({
+        solver,
+        mine: mine.lines[0]?.score ?? null,
+        best: best.lines[0]?.score ?? null,
+        mates: c.isCheckmate(),
+        answerMates: right.isCheckmate(),
+        firstMove: ply === 0,
+      });
+      const epMine = mine.lines[0] ? expectedFor(mine.lines[0].score, solver) : 0;
+      if (accepted) {
         setTried(null);
         setAlt(true);
         setPly(input.line.length);
@@ -208,7 +218,7 @@ export function useSolver(input: SolverInput | null) {
     setHintLevel((h) => Math.min(2, h + 1));
   }, []);
 
-  const dests = useMemo(() => (view && state === 'solve' ? legalDests(view.chess) : undefined), [view, state]);
+  const dests = useMemo(() => (view && state === 'solve' && ply % 2 === 0 ? legalDests(view.chess) : undefined), [view, state, ply]);
   const highlights = useMemo(
     () => (hints && hintLevel >= 2 && state === 'solve' ? new Map([[hints.square, 'hl-key']]) : undefined),
     [hints, hintLevel, state],

@@ -1,10 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import { BookOpen, Download, GraduationCap, History, House, Menu, Microscope, Puzzle, Settings, Users } from 'lucide-react';
-import { Logo } from './components/Widgets';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { AppBar, SideMenu } from './components/SideMenu';
 import { navigate, useRoute } from './lib/router';
 import { loadOpeningBook } from './lib/chess/openings';
 import { pruneEvals } from './lib/review/evalCache';
-import { useLiveGame } from './state/game';
 import { HomePage } from './pages/Home';
 import { PlayHub, PlayPage } from './pages/Play';
 import { GamePage } from './pages/Game';
@@ -19,7 +17,6 @@ import { InsightsPage } from './pages/Insights';
 import { FriendBoard, FriendHome, FriendJoin } from './pages/Friend';
 import { OnlineGamePage } from './pages/Online';
 import { useOnlineSync } from './state/online';
-import { useOpponents } from './state/opponents';
 import { OpeningDrill, OpeningsPage } from './pages/Openings';
 import { LearnPage } from './pages/Learn';
 import { LessonPage } from './pages/Lesson';
@@ -29,51 +26,7 @@ import { RushPage } from './pages/Rush';
 import { ExamPage } from './pages/Exam';
 import { YouPage } from './pages/You';
 
-interface Tab {
-  path: string;
-  label: string;
-  icon: ReactNode;
-  match: (p: string) => boolean;
-}
-
-const TABS: Tab[] = [
-  { path: '/', label: 'Home', icon: <House size={24} fill="currentColor" />, match: (p) => p === '/' || p.startsWith('/play') || p === '/game' },
-  {
-    path: '/puzzles',
-    label: 'Puzzles',
-    icon: <Puzzle size={24} fill="currentColor" />,
-    match: (p) => p.startsWith('/puzzles') || p.startsWith('/tactics'),
-  },
-  {
-    path: '/learn',
-    label: 'Learn',
-    icon: <GraduationCap size={24} />,
-    match: (p) => p.startsWith('/learn') || p.startsWith('/exam') || p.startsWith('/openings'),
-  },
-  {
-    path: '/friend',
-    label: 'Friends',
-    icon: <Users size={24} fill="currentColor" />,
-    match: (p) => p.startsWith('/friend') || p.startsWith('/online'),
-  },
-  {
-    path: '/you',
-    label: 'More',
-    icon: <Menu size={24} />,
-    match: (p) =>
-      ['/you', '/games', '/review', '/analysis', '/import', '/settings', '/practice', '/appearance', '/insights'].some((x) => p.startsWith(x)),
-  },
-];
-
-const TOOLS: Tab[] = [
-  { path: '/games', label: 'Games', icon: <History size={20} />, match: (p) => p.startsWith('/games') || p.startsWith('/review') },
-  { path: '/analysis', label: 'Analysis', icon: <Microscope size={20} />, match: (p) => p.startsWith('/analysis') },
-  { path: '/practice', label: 'Your mistakes', icon: <BookOpen size={20} />, match: (p) => p.startsWith('/practice') },
-  { path: '/import', label: 'Import', icon: <Download size={20} />, match: (p) => p.startsWith('/import') },
-  { path: '/settings', label: 'Settings', icon: <Settings size={20} />, match: (p) => p.startsWith('/settings') },
-];
-
-/** Board screens take the whole phone screen (no tab bar). */
+/** Board screens take the whole phone screen (no menu bar). */
 function isFocus(parts: string[]): boolean {
   const [root, id] = parts;
   if (root === 'game' || root === 'review' || root === 'tactics' || root === 'exam') return true;
@@ -92,9 +45,11 @@ export function App() {
   useEffect(() => {
     main.current?.scrollTo(0, 0);
   }, [route.path]);
-  const live = useLiveGame((s) => s.game);
   useOnlineSync();
-  const yourMoves = useOpponents().filter((o) => o.yourMove).length;
+  const [menu, setMenu] = useState(false);
+  const closeMenu = useCallback(() => setMenu(false), []);
+  // A new screen closes the menu.
+  useEffect(() => setMenu(false), [route.path]);
   useEffect(() => {
     void loadOpeningBook();
     // Old background evaluations are only kept for a month.
@@ -177,41 +132,14 @@ export function App() {
       );
   }
 
-  const href = (t: Tab) => `#${t.path}`;
+  const focus = isFocus(route.parts);
   return (
-    <div className={`app ${isFocus(route.parts) ? 'focus' : ''}`}>
-      <nav className="sidebar">
-        <a className="brand" href="#/">
-          <Logo /> Outpost
-        </a>
-        {TABS.map((t) => (
-          <a key={t.path} href={href(t)} className={`nav-link ${t.match(route.path) && !TOOLS.some((x) => x.match(route.path)) ? 'active' : ''}`}>
-            <span className="ico">{t.icon}</span>
-            {t.label}
-            {t.path === '/' && live?.status === 'playing' && <span className="nav-badge">live</span>}
-          </a>
-        ))}
-        <div className="nav-sep">Tools</div>
-        {TOOLS.map((t) => (
-          <a key={t.path} href={`#${t.path}`} className={`nav-link ${t.match(route.path) ? 'active' : ''}`}>
-            <span className="ico">{t.icon}</span>
-            {t.label}
-          </a>
-        ))}
-        <div className="sidebar-foot">Stockfish 18 · runs on your device</div>
-      </nav>
+    <div className={`app ${focus ? 'focus' : ''}`}>
       <main className="main" ref={main}>
+        {!focus && <AppBar onMenu={() => setMenu(true)} />}
         {page}
       </main>
-      <nav className="tabbar">
-        {TABS.map((t) => (
-          <a key={t.path} href={href(t)} className={`tab ${t.match(route.path) ? 'active' : ''}`}>
-            {t.icon}
-            {t.label}
-            {((t.path === '/' && live?.status === 'playing') || (t.path === '/friend' && yourMoves > 0)) && <span className="tab-dot" />}
-          </a>
-        ))}
-      </nav>
+      <SideMenu open={menu} onClose={closeMenu} path={route.path} />
     </div>
   );
 }

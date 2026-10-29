@@ -864,3 +864,203 @@
 .online-card .tc-tile.on {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
+
+/* ---------------------------------------------------------------- the menu: top bar and side drawer */
+
+:root {
+  --sidebar: 0px;
+}
+.app,
+.app.focus {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 1fr !important;
+}
+.sidebar,
+.tabbar {
+  display: none !important;
+}
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 56px;
+  padding: max(0px, env(safe-area-inset-top)) 12px 0 6px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.appbar-menu {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.appbar-menu:hover {
+  background: var(--surface-2);
+}
+.appbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+.appbar-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+}
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #0009;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  width: min(300px, 84vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  box-shadow: 4px 0 24px #00000066;
+  transform: translateX(-102%);
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.drawer.open {
+  transform: none;
+}
+.drawer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-me {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+.dm-body {
+  display: grid;
+  min-width: 0;
+}
+.dm-body b {
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dm-body span {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 8px;
+}
+.drawer-group + .drawer-group {
+  margin-top: 6px;
+}
+.drawer-title {
+  padding: 12px 12px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.drawer-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.drawer-item:hover {
+  background: var(--surface-2);
+}
+.drawer-item.on {
+  background: var(--surface-3);
+}
+.di-ico {
+  width: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  flex: none;
+}
+.di-label {
+  flex: 1;
+}
+.di-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--bad);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.drawer-foot {
+  padding: 6px 8px 10px;
+  border-top: 1px solid var(--line);
+}
+.ic-mistake {
+  color: #fa6e5a;
+}
+.page.dash {
+  padding-top: 16px;
+}
+.play-dock {
+  left: 0 !important;
+}
+@media (max-width: 900px) {
+  .play-dock {
+    bottom: 0 !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}

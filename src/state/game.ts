@@ -90,14 +90,30 @@ export function ruleResult(chess: Chess): { result: GameResult; termination: str
   return null;
 }
 
-/** Whether `color` could ever checkmate with its remaining material (for timeouts). */
+/**
+ * Whether `color` could ever checkmate with its remaining material, with the
+ * opponent's help (for timeouts: a flag falls to a draw only when the other side
+ * can't possibly mate). A lone knight or bishop can mate only if the defender has
+ * pieces of its own to block its king in; bishops alone, all on one colour, never.
+ */
 export function canMate(chess: Chess, color: Color): boolean {
-  const pieces = chess
-    .board()
-    .flat()
-    .filter((p) => p && p.color === color && p.type !== 'k');
-  if (pieces.some((p) => p!.type === 'p' || p!.type === 'q' || p!.type === 'r')) return true;
-  return pieces.length >= 2;
+  const all = chess.board().flat();
+  const mine = all.filter((p) => p && p.color === color && p.type !== 'k');
+  const theirs = all.filter((p) => p && p.color !== color && p.type !== 'k');
+  if (mine.some((p) => p!.type === 'p' || p!.type === 'q' || p!.type === 'r')) return true;
+  if (!mine.length) return false;
+  const knights = mine.filter((p) => p!.type === 'n').length;
+  if (knights === 0) {
+    // Only bishops: they need squares of both colours, unless the defender has something to block with.
+    const colours = new Set(
+      chess
+        .board()
+        .flatMap((row, r) => row.map((p, f) => (p && p.color === color && p.type === 'b' ? (r + f) % 2 : -1)))
+        .filter((x) => x >= 0),
+    );
+    return colours.size > 1 || theirs.length > 0;
+  }
+  return mine.length >= 2 || theirs.length > 0;
 }
 
 function tcLabel(tc: TimeControl | null) {
@@ -199,7 +215,15 @@ export const useLiveGame = create<GameStore>()(
           const spent = g.turnStartedAt ? now - g.turnStartedAt : 0;
           // The first move of each side is free (as on most sites).
           const free = g.moves.length < 2;
-          clocks[mover] = Math.max(0, clocks[mover] - (free ? 0 : spent)) + (free ? 0 : g.timeControl.increment);
+          // A move made after the flag fell doesn't count: the game is lost on time.
+          if (!free && clocks[mover] - spent <= 0) {
+            const before = chessOf(g);
+            const winner = mover === 'w' ? 'b' : 'w';
+            const result = canMate(before, winner) ? (winner === 'w' ? '1-0' : '0-1') : '1/2-1/2';
+            get().finish(result, result === '1/2-1/2' ? 'timeout vs insufficient material' : 'timeout');
+            return false;
+          }
+          clocks[mover] = clocks[mover] - (free ? 0 : spent) + (free ? 0 : g.timeControl.increment);
           clockHistory.push(clocks[mover]);
         }
         const next: LiveGame = {
@@ -224,12 +248,27 @@ export const useLiveGame = create<GameStore>()(
         n = Math.min(n, g.moves.length);
         if (chess.turn() === g.userColor && g.moves.length === 1) n = 0; // bot moved first, nothing of ours to undo
         if (!n) return;
+        const moves = g.moves.slice(0, -n);
+        const clockHistory = g.clockHistory.slice(0, -n);
+        // Each side's clock goes back to what it showed after its last move that still stands.
+        const clocks = { ...g.clocks };
+        if (g.timeControl) {
+          const first: Color = new Chess(g.startFen).turn();
+          for (const side of ['w', 'b'] as Color[]) {
+            let left = g.timeControl.initial;
+            clockHistory.forEach((ms, i) => {
+              if ((i % 2 === 0 ? first : first === 'w' ? 'b' : 'w') === side) left = ms;
+            });
+            clocks[side] = left;
+          }
+        }
         set({
           game: {
             ...g,
-            moves: g.moves.slice(0, -n),
+            moves,
             sans: g.sans.slice(0, -n),
-            clockHistory: g.clockHistory.slice(0, -n),
+            clocks,
+            clockHistory,
             takebacksUsed: g.takebacksUsed + 1,
             turnStartedAt: Date.now(),
           },

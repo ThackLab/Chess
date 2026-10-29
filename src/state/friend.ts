@@ -9,7 +9,7 @@ import { getOpeningBook } from '../lib/chess/openings';
 import { treeFromMoves, writePgn } from '../lib/chess/pgn';
 import { newId, saveGame, type GameRecord, type GameResult } from '../lib/storage/db';
 import { isAndroidApp } from '../lib/platform';
-import { ruleResult } from './game';
+import { canMate, ruleResult } from './game';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -218,7 +218,15 @@ export const useFriends = create<FriendStore>()(
           if (g.tc && clocks) {
             const free = g.moves.length < 2;
             const spent = g.turnStartedAt ? now - g.turnStartedAt : 0;
-            clocks = { ...clocks, [mover]: Math.max(0, clocks[mover] - (free ? 0 : spent)) + (free ? 0 : g.tc.increment) };
+            // A move made after the flag fell doesn't count.
+            if (!free && clocks[mover] - spent <= 0) {
+              const before = replay(g.startFen, g.moves)!.chess;
+              const winner = mover === 'w' ? 'b' : 'w';
+              const result = canMate(before, winner) ? (winner === 'w' ? '1-0' : '0-1') : '1/2-1/2';
+              get().finish(id, result, result === '1/2-1/2' ? 'timeout vs insufficient material' : 'timeout');
+              return false;
+            }
+            clocks = { ...clocks, [mover]: clocks[mover] - (free ? 0 : spent) + (free ? 0 : g.tc.increment) };
             clockHistory = [...(clockHistory ?? []), clocks[mover]];
           }
           const end = ruleResult(r.chess);

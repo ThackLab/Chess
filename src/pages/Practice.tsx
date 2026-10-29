@@ -13,6 +13,7 @@ import { navigate } from '../lib/router';
 import { playSound, soundForSan } from '../lib/sound';
 import type { Classification } from '../lib/review/types';
 import { hintsFor, refutationText } from '../lib/review/hints';
+import { acceptsAlternative } from '../lib/learn/judge';
 import { PageHead } from '../components/ui';
 import { Moves, Rich, San } from '../components/Rich';
 import { useLearn } from '../state/learn';
@@ -120,7 +121,7 @@ export function PracticePage() {
   };
 
   const onMove = async (from: string, to: string, promotion?: PromotionPiece) => {
-    if (!current || !chess) return;
+    if (!current || !chess || phase !== 'solve') return;
     const c = new Chess(current.fen);
     const mv = playUci(c, from + to + (promotion ?? ''));
     if (!mv) return;
@@ -141,11 +142,16 @@ export function PracticePage() {
         e.analyse({ fen: sol.fen(), limits: { depth: 14, movetime: 2500 } }),
       ]);
       const sign = current.color === 'w' ? 1 : -1;
-      const mine = a.lines[0] ? sign * scoreToCp(a.lines[0].score) : -99999;
-      const best = b.lines[0] ? sign * scoreToCp(b.lines[0].score) : 0;
-      ok = mine >= best - 30;
+      ok = acceptsAlternative({
+        solver: current.color,
+        mine: a.lines[0]?.score ?? null,
+        best: b.lines[0]?.score ?? null,
+        mates: false,
+        answerMates: sol.isCheckmate(),
+        firstMove: true,
+      });
       reply = a.lines[0]?.pv[0];
-      ep = cpToExpected(mine);
+      ep = cpToExpected(a.lines[0] ? sign * scoreToCp(a.lines[0].score) : -99999);
     }
     playSound(ok ? 'correct' : 'wrong');
     setPhase(ok ? 'correct' : 'wrong');

@@ -1,26 +1,12 @@
 import { useMemo } from 'react';
-import {
-  BookOpen,
-  Check,
-  ChessKnight,
-  Download,
-  Flame,
-  GraduationCap,
-  History,
-  Microscope,
-  Puzzle,
-  Palette,
-  Settings,
-  TrendingUp,
-  UserRound,
-} from 'lucide-react';
+import { Check, ChessKnight, Flame, GraduationCap, Puzzle, UserRound } from 'lucide-react';
 import { LEVELS, currentLevel, levelPassed } from '../lib/learn/levels';
 import { findLesson } from '../lib/learn/curriculum';
 import { navigate } from '../lib/router';
 import { Grade, ListRow, Meter, SectionTitle, Sparkline, Stars } from '../components/ui';
 import { useProfile } from '../state/profile';
 import { liveStreak, useLearn } from '../state/learn';
-import { THEME_SETS, useDueCount } from './Puzzles';
+import { THEME_SETS } from './Puzzles';
 import { GameListRow, useGames } from './Games';
 import { CountUp } from '../components/Rich';
 import { backupNow, snoozeBackup, useBackupDue } from '../lib/backup';
@@ -30,7 +16,6 @@ export function YouPage() {
   const profile = useProfile();
   const learn = useLearn();
   const games = useGames();
-  const due = useDueCount();
   const level = currentLevel(learn);
   const streak = liveStreak(learn);
   const passed = LEVELS.filter((l) => levelPassed(learn, l)).length;
@@ -233,23 +218,6 @@ export function YouPage() {
           </div>
         </>
       )}
-
-      <SectionTitle>Tools</SectionTitle>
-      <div className="list">
-        <ListRow icon={<History size={20} />} title="Games" sub="Every game you played or imported, with reviews" href="/games" />
-        <ListRow
-          icon={<BookOpen size={20} />}
-          iconClass="ico-danger"
-          title="Your mistakes"
-          sub={due ? `${due} positions to fix today` : 'Positions from your games, on spaced repetition'}
-          href="/practice"
-        />
-        <ListRow icon={<Microscope size={20} />} title="Analysis board" sub="Engine lines, variations, PGN and FEN" href="/analysis" />
-        <ListRow icon={<Download size={20} />} title="Import games" sub="From chess.com, lichess or a PGN" href="/import" />
-        <ListRow icon={<TrendingUp size={20} />} title="Insights" sub="Your patterns across every reviewed game" href="/insights" />
-        <ListRow icon={<Palette size={20} />} title="Appearance" sub="Themes, boards, pieces and text size" href="/appearance" />
-        <ListRow icon={<Settings size={20} />} title="Settings" sub="Board, sound, engine and data" href="/settings" />
-      </div>
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { Bot, Check, ChevronRight, Flame, GraduationCap, Plus, Puzzle, Settings, Star, Sun, Timer, Users, Zap } from 'lucide-react';
+import { Bot, Check, ChevronRight, GraduationCap, Plus, Puzzle, Star, Sun, Timer, Zap } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { navigate } from '../lib/router';
 import { findBot, monogram } from '../lib/bots/bots';
 import { useProfile } from '../state/profile';
 import { useLiveGame } from '../state/game';
 import { useSettings } from '../state/settings';
-import { liveStreak, todayLog, useLearn } from '../state/learn';
+import { todayLog, useLearn } from '../state/learn';
 import { todayPlan } from '../lib/learn/today';
 import { currentLevel, nextStep } from '../lib/learn/levels';
 import { findLesson } from '../lib/learn/curriculum';
@@ -60,8 +60,6 @@ export function HomePage() {
   const learn = useLearn();
   const games = useGames();
   const live = useLiveGame((s) => s.game);
-  const name = useSettings((s) => s.playerName);
-  const streak = liveStreak(learn);
   const step = nextStep(learn);
   const lesson = step.kind === 'lesson' ? findLesson(step.lessonId) : undefined;
   const level = currentLevel(learn);
@@ -71,23 +69,6 @@ export function HomePage() {
 
   return (
     <div className="page narrow dash">
-      <header className="dash-top">
-        <a href="#/you" className="me-avatar" aria-label="Your profile">
-          {monogram(name && name !== 'You' ? name : 'Me')}
-        </a>
-        <span className="dash-stat" title="Days in a row with some training">
-          <Flame size={22} className="ic-flame" fill="currentColor" />
-          <b>{streak}</b>
-        </span>
-        <span className="spacer" />
-        <a href="#/friend" className="dash-icon ic-friends" aria-label="Friends">
-          <Users size={24} />
-        </a>
-        <a href="#/settings" className="dash-icon" aria-label="Settings">
-          <Settings size={24} />
-        </a>
-      </header>
-
       {live?.status === 'playing' && (
         <button className="dash-resume" onClick={() => navigate('/game')}>
           <span className="avatar">{monogram(findBot(live.botId)?.name ?? 'Bot')}</span>
