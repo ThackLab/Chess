@@ -2,7 +2,7 @@
 
 A free, private, chess.com-style app that runs entirely in your browser:
 
-- **Play bots from 250 to 3200 Elo.** 17 bots with personalities, or pick any rating. Includes clocks (bullet to classical), hints, takebacks, premoves, draw offers and a training mode with a live eval bar. The Play screen opens on your usual opponent, so one tap starts a game; the strip of bots underneath switches opponent.
+- **Play bots from 100 to 3200 Elo.** 19 bots with personalities, or pick any rating from 100 up. The lowest ones play like real beginners: they grab what you leave hanging, but lose track of their own pieces and never see a fork coming. Includes clocks (bullet to classical), hints, takebacks, premoves, draw offers and a training mode with a live eval bar. The Play screen opens on your usual opponent, so one tap starts a game; the strip of bots underneath switches opponent.
 - **A full game review after every game (optional, on by default).** Stockfish 18 analyses every position on all your CPU cores (most of them already in the background while you play, so the review is usually ready a few seconds after the game ends), then:
   - gives each player an **accuracy** score (lichess's published formula), a **game rating** estimate and phase-by-phase ratings (opening / middlegame / endgame);
   - classifies every move as **Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake, Miss or Blunder**, using chess.com's expected-points thresholds;
@@ -103,12 +103,27 @@ There is no App Store build: on iOS the app runs as a web app. Open the deployed
 
 ## How the bots work
 
-- **Under 1500 Elo:** the bots model what a player at that level *notices*. Weaker players rarely lose because they calculate a little worse on every move. They lose because they don't see things: the piece you just left hanging, the threat to their own knight, the check that wins. So each turn the bot only considers the moves it noticed:
-  - **Noticing:** each enemy piece it could win is either spotted or missed (38% chance to spot at 250, 58% at 850, 80% at 1450), and so is each attack on one of its own pieces (60% / 80% / 93%). It also considers recaptures, some checks, castling, a handful of ordinary moves, and sometimes the engine's best move. A move it didn't notice is never played, so a 250 bot really does walk past a free queen now and then.
-  - **Judging:** it compares the moves it noticed with a one-move look (it sees what can be taken straight back), blended with Stockfish's deep evaluation at higher ratings, plus some judgement noise. Now and then it judges a move without looking at the reply; that is where greedy captures of defended pieces come from.
-  - **Finishing games:** when clearly winning, it sometimes plays the engine's move (15% of the time at 250, 78% at 1450), so won games get converted without low-rated bots converting like machines.
+- **Under 1500 Elo:** the bots model what a player at that level *notices*. Weaker players rarely lose because they calculate a little worse on every move. They lose because they don't see things: the threat to their own knight, the move that leaves a piece hanging, the fork two moves away. So each turn the bot only considers the moves it noticed:
+  - **What even beginners see:** a piece they can simply take. An obvious free piece is spotted 84% of the time at 100 and nearly always by 1450. A piece that has just landed in front of the bot, or one a pawn can take, is spotted more often; a long diagonal shot, a knight's capture or a capture backwards less.
+  - **What they don't:** threats to their own pieces (noticed 35% of the time at 100, 50% at 250, 78% at 850, 93% at 1450), anything deeper than the move in front of them, and often the reply to their own move: now and then they judge a move without looking at it (30% of the time at 100, 5% at 850, about 1% at 1450). That's where their hung pieces come from. A mate in one is spotted half the time at 100 and nearly always at 1450.
+  - **How they look at a move:** low down, the way a beginner checks one: what it takes, and whether the opponent can take something straight back. That blends into Stockfish's shallow search between 700 and 1450. (Stockfish's shallow search keeps searching after a check, which is how the earlier low-rated bots found forks hidden behind checks.) From about 500 up the bot sometimes also considers Stockfish's best move, and judges with more of its deep evaluation as the rating rises.
+  - **Taste:** low-rated bots love giving check and bringing the queen out early; both fade out by about 850.
+  - **Finishing games:** when clearly winning, it sometimes plays the engine's move (78% of the time at 1450). Below 700 that only happens in a nearly empty endgame, so beginners don't suddenly play like engines.
   - The settings are a table of anchor ratings in `src/lib/bots/brain.ts`, interpolated in between.
-  - **Measuring:** `BOT_SEE="250,550,850,1150,1450;2" npx vitest run src/test/botPerception.test.ts --silent=false` puts each level in the puzzle positions just after a piece was left hanging, and reports how often it wins that piece and, with colours swapped, how often it saves its own. Currently 250 punishes 48% and saves 59%, 550 62% / 70%, 850 75% / 80%, 1150 86% / 85%, 1450 93% / 91%. `BOT_CAL="250,550,850,1150,1450;8" npx vitest run src/test/botCalibrate.test.ts --silent=false` plays self-play games and reports, for balanced positions, how often each level gives away 2.5+ pawns (250: ~6% of its moves, 850: ~3.5%, 1450: ~1.7%), makes a 1–2.5 pawn mistake (250: ~20%, 850: ~8%, 1450: ~2%) or misses a winning capture. `BOT_LADDER="850:1150,1450:1500;8" npx vitest run src/test/botLadder.test.ts --silent=false` plays head-to-head matches, and `BOT_DUEL="1150:1450;4" npx vitest run src/test/botDuel.test.ts --silent=false` lists each side's big mistakes.
+  - **Measuring:** `BOT_AUDIT="100,250,500,850,1150,1450;150" npx vitest run src/test/botAudit.test.ts --silent=false` puts each level in positions from the puzzle bank and reports how often it takes a free piece, mates in one, finds a real tactic (fork, pin, skewer, discovery, mate in two, where nothing is simply hanging), saves its own hanging piece, and blunders in the positions where a player blundered. Currently:
+
+    | Level | Takes a free piece | Mate in one | Finds a real tactic | Saves its own piece | Blunders |
+    |------:|---:|---:|---:|---:|---:|
+    | 100   | 77% | 52% | 11% | 41% | 63% |
+    | 250   | 79% | 55% |  9% | 48% | 58% |
+    | 500   | 85% | 71% | 15% | 64% | 36% |
+    | 850   | 92% | 91% | 52% | 81% | 32% |
+    | 1150  | 97% | 99% | 83% | 94% |  8% |
+    | 1450  | 100% | 99% | 94% | 96% |  5% |
+
+    Before this model the 100 bot took a free piece only 49% of the time but found a real tactic 24% of the time (250: 54% and 31%, 500: 66% and 55%): the wrong way round for a beginner.
+
+    `BOT_LADDER="250:100,500:250,850:500,1150:850;12" npx vitest run src/test/botLadder.test.ts --silent=false` plays head-to-head matches and reports the implied rating gap. Over 12–16 games each: 250 beats 100 18/24 (implied gap ~190, labelled 150), 500 beats 250 10/12 (280 vs 250), 850 beats 500 14/16 (338 vs 350) and 1150 beats 850 14/16 (338 vs 300). `BOT_CAL`, `BOT_SEE` and `BOT_DUEL` (in `src/test/`) measure blunder rates in self-play, the older hanging-piece test and each side's big mistakes.
 - **1500–3190:** Stockfish's `UCI_LimitStrength` / `UCI_Elo`. Its scale is calibrated against engines at long time controls, and at the app's speed its low settings play weaker than labelled, so the app passes a slightly higher `UCI_Elo` at the low end (+230 at 1500, fading out by 2300; see `stockfishEloFor`). With that, the 1450 human-model bot scores 44% against 1500 and 38% against 1600 over 16 games.
 - **3200:** full-strength Stockfish.
 - Bots open from an opening book of 3,300+ named lines, so their openings vary from game to game.

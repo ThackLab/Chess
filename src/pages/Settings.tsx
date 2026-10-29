@@ -145,13 +145,13 @@ export function SettingsPage() {
               Edit profile
             </button>
           </Row>
-          <Row title="Rating vs bots" desc="Starts at 1000 and adjusts after each rated bot game. Set it to your real rating if you like.">
+          <Row title="Rating vs bots" desc="Starts at 400 and adjusts after each rated bot game. Set it to your real rating if you like.">
             <div className="row">
               <input type="number" value={ratingInput} onChange={(e) => setRatingInput(e.target.value)} style={{ width: 80 }} />
               <button
                 className="btn small"
                 onClick={() => {
-                  const r = Math.max(100, Math.min(3200, +ratingInput || 1000));
+                  const r = Math.max(100, Math.min(3200, +ratingInput || 400));
                   profile.setRating(r);
                   toast('Rating updated');
                 }}

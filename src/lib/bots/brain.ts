@@ -1,16 +1,26 @@
 // Bot move selection. Below 1500 Elo we model what a player at that level
 // notices. People don't lose to weaker players because they calculate less
-// well on every move; they lose because they don't see things: the piece
-// you just left hanging, the threat to their own knight, the check that
-// wins. So each turn the bot only considers the moves it noticed (free
-// captures, threats to its own pieces, checks, recaptures, a few ordinary
-// moves, and sometimes the engine's best move), with noticing chances that
-// rise with the rating. It judges the moves it considered with a shallow
-// look, plus some of Stockfish's deep evaluation at higher ratings, and now
-// and then plays one without checking the reply. When clearly winning it
-// only sometimes plays the engine's move, so low-rated bots don't convert
-// like machines. From 1500 up we use Stockfish's UCI_Elo limiter.
-import { Chess, type Square } from 'chess.js';
+// well on every move; they lose because they don't see things: the threat to
+// their own knight, the move that leaves a piece hanging, the fork two moves
+// away. So each turn the bot only considers the moves it noticed (captures,
+// threats to its own pieces, checks, mates, recaptures, a few ordinary moves
+// and, from about 500 up, sometimes the engine's best move), with noticing
+// chances that rise with the rating.
+//
+// What even a 100-rated player does see is a piece they can simply take: an
+// obvious free piece is spotted 80% of the time at 100 and nearly always by
+// 1450 (a piece that just landed in front of them is easier to see, a long
+// diagonal or backwards capture harder). Their weakness is everything else:
+// they often don't notice their own piece is attacked, often move without
+// checking the reply, love giving check and bring the queen out early, and
+// never find a tactic deeper than the move in front of them.
+//
+// The bot judges the moves it considered with a shallow look (it sees what
+// can be taken straight back), plus some of Stockfish's deep evaluation at
+// higher ratings. When clearly winning it only sometimes plays the engine's
+// move (below 700, only in a nearly empty endgame), so low-rated bots don't
+// convert like machines. From 1500 up we use Stockfish's UCI_Elo limiter.
+import { Chess, type Color, type Move, type Square } from 'chess.js';
 import type { Engine } from '../engine/engine';
 import { scoreToCp, type Score } from '../engine/uci';
 import type { OpeningBook } from '../chess/openings';
@@ -25,7 +35,7 @@ export interface StrengthParams {
   multipv: number;
   /** Chances of noticing, per turn (human mode). */
   notice: {
-    /** That an enemy piece can be won. */
+    /** That an enemy piece can be won (an average capture; see captureSalience). */
     capture: number;
     /** That one of its own pieces is attacked. */
     threat: number;
@@ -37,6 +47,8 @@ export interface StrengthParams {
     best: number;
     /** A given ordinary move. */
     quiet: number;
+    /** That a move mates. */
+    mate: number;
   };
   /** Chance a considered move is judged without looking at the reply. */
   blind: number;
@@ -46,6 +58,10 @@ export interface StrengthParams {
   noise: number;
   /** Chance of playing the engine's move when clearly winning. */
   convert: number;
+  /** How much the bot likes giving check (centipawns). */
+  checkLove: number;
+  /** How much it likes moving the queen in the first few moves (centipawns). */
+  queenRush: number;
   movetime: number;
   /** How many plies the bot may follow its opening book. */
   bookPlies: number;
@@ -66,18 +82,19 @@ export function stockfishEloFor(elo: number): number {
 }
 
 /**
- * Human-model settings at anchor ratings, interpolated in between. Columns:
- * elo, notice capture/threat/recapture/check/best/quiet, blind, insight,
- * noise, convert. Tuned with src/test/botPerception.test.ts (how often a
- * level wins a hanging piece and saves its own) and botCalibrate/botLadder.
+ * Human-model settings at anchor ratings, interpolated in between. Tuned with
+ * src/test/botAudit.test.ts (how often each level takes a free piece, mates in
+ * one, finds a real tactic, saves its own piece and blunders) and
+ * botCalibrate/botLadder.
  */
 const ANCHORS: number[][] = [
-  [100, 0.32, 0.5, 0.75, 0.25, 0.1, 0.28, 0.05, 0, 75, 0.1],
-  [250, 0.38, 0.6, 0.8, 0.3, 0.15, 0.3, 0.04, 0, 70, 0.15],
-  [500, 0.45, 0.68, 0.85, 0.4, 0.22, 0.33, 0.035, 0.08, 62, 0.28],
-  [850, 0.58, 0.8, 0.9, 0.55, 0.35, 0.38, 0.025, 0.2, 55, 0.45],
-  [1150, 0.65, 0.88, 0.95, 0.7, 0.5, 0.42, 0.018, 0.32, 48, 0.62],
-  [1450, 0.8, 0.93, 0.97, 0.82, 0.65, 0.45, 0.012, 0.45, 40, 0.78],
+  // elo  take  threat recap check best  quiet mate  blind  insight noise convert checkLove queenRush
+  [100, 0.84, 0.35, 0.8, 0.55, 0, 0.3, 0.5, 0.3, 0, 90, 0.03, 35, 30],
+  [250, 0.88, 0.5, 0.85, 0.5, 0.02, 0.3, 0.58, 0.2, 0, 80, 0.06, 28, 20],
+  [500, 0.9, 0.7, 0.88, 0.5, 0.05, 0.33, 0.7, 0.07, 0.03, 65, 0.15, 15, 5],
+  [850, 0.92, 0.78, 0.92, 0.6, 0.06, 0.38, 0.82, 0.05, 0.06, 55, 0.35, 5, 0],
+  [1150, 0.95, 0.87, 0.95, 0.7, 0.38, 0.42, 0.92, 0.025, 0.28, 48, 0.6, 0, 0],
+  [1450, 0.97, 0.93, 0.97, 0.82, 0.65, 0.45, 0.97, 0.012, 0.45, 40, 0.78, 0, 0],
 ];
 
 function anchored(elo: number, col: number): number {
@@ -92,11 +109,13 @@ function anchored(elo: number, col: number): number {
 export function strengthFor(elo: number): StrengthParams {
   const bookPlies = Math.round(Math.max(2, Math.min(24, (elo - 100) / 110)));
   const none = {
-    notice: { capture: 1, threat: 1, recapture: 1, check: 1, best: 1, quiet: 1 },
+    notice: { capture: 1, threat: 1, recapture: 1, check: 1, best: 1, quiet: 1, mate: 1 },
     blind: 0,
     insight: 1,
     noise: 0,
     convert: 1,
+    checkLove: 0,
+    queenRush: 0,
   };
   if (elo >= 3150) return { mode: 'full', depth: 0, multipv: 1, ...none, movetime: 1500, bookPlies: 16 };
   if (elo >= STOCKFISH_MIN_ELO) {
@@ -115,11 +134,14 @@ export function strengthFor(elo: number): StrengthParams {
       check: anchored(e, 4),
       best: anchored(e, 5),
       quiet: anchored(e, 6),
+      mate: anchored(e, 7),
     },
-    blind: anchored(e, 7),
-    insight: anchored(e, 8),
-    noise: anchored(e, 9),
-    convert: anchored(e, 10),
+    blind: anchored(e, 8),
+    insight: anchored(e, 9),
+    noise: anchored(e, 10),
+    convert: anchored(e, 11),
+    checkLove: anchored(e, 12),
+    queenRush: anchored(e, 13),
     movetime: 0,
     bookPlies,
   };
@@ -140,6 +162,26 @@ export interface BotMove {
   source: 'book' | 'engine';
   /** Engine evaluation from White's perspective (when known). */
   score?: Score;
+}
+
+/**
+ * How easy a capture is to miss, as a multiple of an average capture's chance
+ * of being missed. A piece that has just landed in front of you, or one a
+ * pawn can take, is hard to miss; a long diagonal shot, a knight's capture or
+ * a capture backwards is easier to overlook.
+ */
+export function captureSalience(m: Move, justArrived: string | undefined, me: Color): number {
+  let f = 1;
+  if (m.to === justArrived) f *= 0.5;
+  if (m.piece === 'p' || m.piece === 'k') f *= 0.7;
+  const df = Math.abs(m.from.charCodeAt(0) - m.to.charCodeAt(0));
+  const dr = +m.to[1] - +m.from[1];
+  const dist = Math.max(df, Math.abs(dr));
+  if (m.piece === 'n') f *= 1.2;
+  else if (dist >= 4) f *= 1.6;
+  else if (dist === 3) f *= 1.25;
+  if ((me === 'w' ? dr : -dr) < 0) f *= 1.4;
+  return f;
 }
 
 /** Standard normal sample (Box-Muller). */
@@ -232,8 +274,11 @@ export async function chooseBotMove(engine: Engine, ctx: BotMoveContext): Promis
   const bestUci = deepLines[0].pv[0];
   const bestDeep = cpOf(deepLines[0].score);
 
-  // Clearly winning: sometimes the engine's move, so games do get finished.
-  if (bestDeep > 400 && rng() < params.convert) return { uci: bestUci, san: sanOf(bestUci), source: 'engine', score: deepLines[0].score };
+  // Clearly winning: sometimes the engine's move, so games do get finished. Below
+  // 700 only in a nearly empty endgame: otherwise it would play tactics far
+  // beyond its level.
+  if (bestDeep > 400 && (ctx.bot.elo >= 700 || pieces <= 4) && rng() < params.convert)
+    return { uci: bestUci, san: sanOf(bestUci), source: 'engine', score: deepLines[0].score };
 
   const n = params.notice;
   const noticed = new Set<string>();
@@ -246,15 +291,25 @@ export async function chooseBotMove(engine: Engine, ctx: BotMoveContext): Promis
       if (spotted) noticed.add(u);
     }
   };
-  // Enemy pieces that can be won: each one is either spotted or not.
-  for (const h of hangingPieces(chess, other(me))) spot(legal.filter((m) => m.to === h.square).map(moveToUci), rng() < n.capture);
-  // Own pieces under attack: moving them away, or taking the attacker.
+  const last = ctx.moves.at(-1);
+  const justArrived = last?.slice(2, 4);
+  // Mate in one: seen, or not.
+  spot(legal.filter((m) => m.san.endsWith('#')).map(moveToUci), rng() < n.mate);
+  // Enemy pieces that can be won: each way of taking one is either spotted or not.
+  for (const h of hangingPieces(chess, other(me)))
+    for (const m of legal.filter((x) => x.to === h.square)) {
+      const miss = Math.min(0.98, (1 - n.capture) * captureSalience(m, justArrived, me));
+      spot([moveToUci(m)], rng() >= miss);
+    }
+  // Own pieces under attack: moving them away, or taking the attacker. A threat
+  // the opponent just made is easier to notice than one that has been there.
   for (const h of hangingPieces(chess, me)) {
     const attackers = new Set<string>(chess.attackers(h.square, other(me)));
-    spot(legal.filter((m) => m.from === h.square || attackers.has(m.to)).map(moveToUci), rng() < n.threat);
+    const fresh = !!justArrived && attackers.has(justArrived as Square);
+    const miss = (1 - n.threat) * (fresh ? 0.8 : 1);
+    spot(legal.filter((m) => m.from === h.square || attackers.has(m.to)).map(moveToUci), rng() >= miss);
   }
   // Taking back after the opponent's capture.
-  const last = ctx.moves.at(-1);
   if (last && ctx.moves.length) {
     const prev = new Chess(ctx.startFen);
     for (const u of ctx.moves.slice(0, -1)) prev.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
@@ -285,19 +340,40 @@ export async function chooseBotMove(engine: Engine, ctx: BotMoveContext): Promis
     options: { UCI_LimitStrength: false },
   });
   const seen = new Map(sightRes.lines.filter((l) => l.pv.length).map((l) => [l.pv[0], cpOf(l.score)]));
-  const bestSeen = Math.max(...seen.values());
+  // What an ordinary move here is worth: a move judged without looking at the reply seems about that good.
+  const sorted = [...seen.values()].sort((a, b) => a - b);
+  const typical = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0;
   const floor = Math.min(...deep.values()) - 50;
+  const opening = ctx.moves.length < 16;
+  // Low down the look is a beginner's: what the move takes, and whether
+  // the opponent can take something straight back. (Stockfish's shallow search
+  // keeps searching after a check, so it would see the fork behind it.) A
+  // quiet move keeps a little of Stockfish's positional sense. It fades out
+  // between 700 and 1450.
+  const naiveWeight = Math.max(0, Math.min(1, (1450 - ctx.bot.elo) / 750));
+  const naiveLook = (m: Move, sf: number): number => {
+    const next = new Chess(chess.fen());
+    next.move({ from: m.from, to: m.to, promotion: m.promotion });
+    if (next.isCheckmate()) return 5000;
+    const gain = (m.captured ? 100 * PIECE_VALUE[m.captured] : 0) + (m.promotion ? 800 : 0);
+    const loss = Math.max(0, ...hangingPieces(next, me).map((h) => 100 * h.loss));
+    const positional = m.captured || m.san.includes('+') ? 0 : Math.max(-40, Math.min(40, sf - typical));
+    return typical + gain - loss + positional;
+  };
   const clamp = (cp: number) => Math.max(-1500, Math.min(1500, cp));
   let choice = [...noticed][0];
   let top = -Infinity;
   for (const uci of noticed) {
     const m = legal.find((x) => moveToUci(x) === uci)!;
-    const s = seen.get(uci) ?? floor;
+    const sf = seen.get(uci) ?? floor;
+    const s = naiveWeight > 0 ? naiveWeight * naiveLook(m, sf) + (1 - naiveWeight) * sf : sf;
     const d = deep.get(uci) ?? Math.min(floor, s);
     // A blind judgement ignores the reply: the move just looks like it grabs whatever it captures.
     const gain = (m.captured ? 100 * PIECE_VALUE[m.captured] : 0) + (m.promotion ? 800 : 0);
+    const taste = (m.san.includes('+') ? params.checkLove : 0) + (opening && m.piece === 'q' ? params.queenRush : 0);
     const v =
-      (rng() < params.blind ? clamp(bestSeen) - 20 + gain : params.insight * clamp(d) + (1 - params.insight) * clamp(s)) +
+      (rng() < params.blind ? clamp(typical) - 10 + gain : params.insight * clamp(d) + (1 - params.insight) * clamp(s)) +
+      taste +
       params.noise * gaussian(rng);
     if (v > top) {
       top = v;

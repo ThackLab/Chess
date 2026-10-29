@@ -21,7 +21,7 @@ export interface Profile {
 export const useProfile = create<Profile>()(
   persist(
     (set, get) => ({
-      rating: 1000,
+      rating: 400,
       games: 0,
       wins: 0,
       losses: 0,

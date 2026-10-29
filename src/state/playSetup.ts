@@ -30,7 +30,8 @@ export interface Setup {
   customElo: number;
 }
 
-const DEFAULT: Setup = { botId: 'hugo', color: 'w', tc: 0, takebacks: true, hints: true, evalBar: false, coach: false, customElo: 1200 };
+// New players start against a 400 bot, like a new account on chess.com.
+const DEFAULT: Setup = { botId: 'mo', color: 'w', tc: 0, takebacks: true, hints: true, evalBar: false, coach: false, customElo: 400 };
 
 export function hasSavedSetup(): boolean {
   try {
@@ -57,7 +58,7 @@ export function saveSetup(s: Setup) {
 }
 
 export function setupBot(s: Setup): BotProfile {
-  return s.botId.startsWith('custom') ? customBot(s.customElo) : (findBot(s.botId) ?? BOTS[5]);
+  return s.botId.startsWith('custom') ? customBot(s.customElo) : (findBot(s.botId) ?? findBot(DEFAULT.botId)!);
 }
 
 /** The roster bot closest to a rating. */

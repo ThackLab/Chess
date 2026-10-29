@@ -16,6 +16,26 @@ export interface BotProfile {
 
 export const BOTS: BotProfile[] = [
   {
+    id: 'sprout',
+    name: 'Sprout',
+    elo: 100,
+    avatar: '🌱',
+    tint: '#b7e4c7',
+    style: 'aggressive',
+    tagline: 'Knows how the pieces move. Mostly.',
+    bio: 'Sprout grabs anything you leave lying around and gives check whenever it can, but hardly ever notices when its own pieces are attacked. Perfect for your first wins.',
+  },
+  {
+    id: 'biscuit',
+    name: 'Biscuit',
+    elo: 175,
+    avatar: '🐶',
+    tint: '#f4c995',
+    style: 'aggressive',
+    tagline: 'Queen out, checks everywhere',
+    bio: 'Biscuit brings the queen out early and loves a check. It takes free pieces, but leaves its own hanging all the time.',
+  },
+  {
     id: 'pip',
     name: 'Pip',
     elo: 250,
@@ -23,7 +43,7 @@ export const BOTS: BotProfile[] = [
     tint: '#f6d365',
     style: 'balanced',
     tagline: 'Just learned how the horsey moves',
-    bio: 'Pip tries to keep its pieces safe but misses plenty: free pieces, checks, anything more than a move deep. A good first opponent.',
+    bio: 'Pip takes what you leave hanging, but often forgets about its own pieces and never sees more than a move ahead.',
   },
   {
     id: 'mo',
@@ -33,7 +53,7 @@ export const BOTS: BotProfile[] = [
     tint: '#9bd77a',
     style: 'solid',
     tagline: 'Slow and steady (mostly steady)',
-    bio: 'Mo likes to push pawns and usually guards what is attacked, but often misses the piece you leave hanging.',
+    bio: 'Mo likes to push pawns and takes free pieces, but notices threats to its own pieces only some of the time.',
   },
   {
     id: 'lena',
