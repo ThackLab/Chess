@@ -38,7 +38,14 @@ jobs:
           distribution: temurin
           java-version: 17
       - if: github.event_name != 'pull_request'
-        run: ./android/build-apk.sh && cp android/build/grandmasters.apk dist/grandmasters.apk
+        run: |
+          ./android/build-apk.sh
+          cp android/build/grandmasters.apk dist/grandmasters.apk
+          # A fingerprint anyone can compare with the APK they were sent.
+          (cd dist && sha256sum grandmasters.apk > grandmasters.apk.sha256)
+          echo "### grandmasters.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "SHA-256: \`$(cut -d' ' -f1 dist/grandmasters.apk.sha256)\`" >> "$GITHUB_STEP_SUMMARY"
+          cat dist/grandmasters.apk.sha256
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:

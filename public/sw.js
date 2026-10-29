@@ -36,7 +36,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   // Downloads (the Android app) go straight to the network.
-  if (url.pathname.endsWith('.apk')) return;
+  if (url.pathname.endsWith('.apk') || url.pathname.endsWith('.sha256')) return;
   // The multi-threaded engine only runs on hosts that make the page cross-origin isolated, and a
   // worker served from here loses that isolation, so its files always come from the network.
   if (/\/engine\/stockfish-[^/]*\.(js|wasm)$/.test(url.pathname) && !url.pathname.includes('-single')) return;

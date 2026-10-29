@@ -2,7 +2,7 @@
 
 A free, private, chess.com-style app that runs entirely in your browser:
 
-- **Play bots from 250 to 3200 Elo.** 17 bots with personalities, or pick any rating. Includes clocks (bullet to classical), hints, takebacks, premoves, draw offers and a training mode with a live eval bar. The Play tab opens on your usual opponent, so one tap starts a game; the strip of bots underneath switches opponent.
+- **Play bots from 250 to 3200 Elo.** 17 bots with personalities, or pick any rating. Includes clocks (bullet to classical), hints, takebacks, premoves, draw offers and a training mode with a live eval bar. The Play screen opens on your usual opponent, so one tap starts a game; the strip of bots underneath switches opponent.
 - **A full game review after every game (optional, on by default).** Stockfish 18 analyses every position on all your CPU cores (most of them already in the background while you play, so the review is usually ready a few seconds after the game ends), then:
   - gives each player an **accuracy** score (lichess's published formula), a **game rating** estimate and phase-by-phase ratings (opening / middlegame / endgame);
   - classifies every move as **Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake, Miss or Blunder**, using chess.com's expected-points thresholds;
@@ -39,7 +39,25 @@ A free, private, chess.com-style app that runs entirely in your browser:
 - **Review your chess.com and lichess games for free.** Import recent games by username, or paste or upload any PGN, including multi-game files.
 - Game library, rating graph, opening stats, backup and restore, with a reminder to back up once you have games worth keeping. Installs as a PWA and keeps working offline once loaded.
 
-Your games, reviews and puzzles live in your browser's IndexedDB; there is no account and no server of ours. The network is used for the chess.com/lichess import, the AI coach if you turn it on, and live games. Games by link travel in the links themselves.
+## Get it
+
+- **Android:** download [grandmasters.apk](https://thacklab.github.io/chess/grandmasters.apk), open it and allow installing from that app when Android asks. Android warns about any app that isn't from the Play Store; that's expected.
+- **iPhone, iPad or a computer:** open https://thacklab.github.io/chess/ (on iPhone, in Safari: **Share → Add to Home Screen**).
+
+## Privacy and safety
+
+Everything the app is made of is in this repository, and both the website and the APK above are built from it by GitHub Actions; every build's log is public under the repository's **Actions** tab.
+
+- **No account, no ads, no analytics, no tracking.** There is no server of ours. Games, reviews, puzzles and settings stay on the device (the browser's IndexedDB and local storage), and Settings has a button to wipe them.
+- **Android permissions:** `INTERNET` and `VIBRATE`, nothing else (see `android/AndroidManifest.xml`). No contacts, location, camera, microphone or files; Android shows this under *Settings → Apps → Grandmasters → Permissions*.
+- **What goes over the network, and only when you start it:**
+  - *Live games:* the name you type and your moves, through public MQTT relays (`broker.emqx.io`, `broker.hivemq.com`, `test.mosquitto.org`), encrypted with a key made from the game code (see below). The relays, like any server you connect to, see your IP address.
+  - *Importing games:* your chess.com or lichess username goes to `api.chess.com` or `lichess.org` to fetch your public games.
+  - *AI coach:* off by default; with your own Anthropic API key it sends the game you ask about to Anthropic. The key stays on your device.
+  - *The app itself:* loading the website fetches it from GitHub Pages. The Android app needs no download at all to run.
+- **Checking the APK:** the build writes the APK's SHA-256 fingerprint next to it ([grandmasters.apk.sha256](https://thacklab.github.io/chess/grandmasters.apk.sha256)) and into the build log. Compare it with the file you were sent (`sha256sum grandmasters.apk`, or any SHA-256 app), or build the APK yourself from this code (below). The APK is signed with uber-apk-signer's public debug key, so the signature alone doesn't say who built it; the fingerprint does.
+
+Games by link travel in the links themselves.
 
 **How live games work.** There is no game server: moves go through free public MQTT brokers (EMQX, HiveMQ and Mosquitto's test broker, all at once, so a game survives one of them being down). Every message holds the whole game with a version number and is encrypted (AES-GCM) with a key made from the game code, under a topic that is a hash of the code, so the brokers only see noise. Each device checks every state it receives: the moves must be legal and follow on from the moves it already has, and only the opponent's moves are accepted. The latest state is kept on the broker, so whoever reconnects gets it straight away. `src/lib/online/mqtt.ts` is a small MQTT-over-WebSocket client, `src/lib/online/relay.ts` the encryption and brokers, and `src/state/online.ts` the game rules (`src/state/online.test.ts` tests them).
 
