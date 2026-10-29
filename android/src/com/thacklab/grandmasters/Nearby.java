@@ -45,12 +45,13 @@ import org.json.JSONObject;
 final class Nearby {
     /** Marks a Grandmasters advertisement. */
     private static final ParcelUuid SERVICE = ParcelUuid.fromString("c0a82b71-7218-4441-9238-213d5b2dce8d");
-    /** The Bluetooth SIG's company id for testing; its data carries [version, friend code, name]. */
+    /** The Bluetooth SIG's company id for testing; its data carries [version, friend code, avatar, name]. */
     private static final int COMPANY = 0xFFFF;
-    private static final int VERSION = 1;
+    /** Version 2 added the avatar (2 bytes); version 1 (app 1.4) had none. */
+    private static final int VERSION = 2;
     private static final int ID_LENGTH = 10;
-    /** A scan response holds 31 bytes: 4 for the header, 1 + 10 for version and code, the rest for the name (with a byte to spare). */
-    private static final int NAME_BYTES = 15;
+    /** A scan response holds 31 bytes: 4 for the header, 1 + 10 + 2 for version, code and avatar, the rest for the name (with a byte to spare). */
+    private static final int NAME_BYTES = 13;
     private static final String ID_PATTERN = "[0-9A-HJKMNP-TV-Z]{10}";
     static final int PERMISSION_REQUEST = 2;
 
@@ -76,15 +77,17 @@ final class Nearby {
         this.events = events;
     }
 
-    /** The Nearby screen opened (or the name changed): advertise this code and name, and look for others. */
-    void start(String id, String name) {
+    /** The Nearby screen opened (or the profile changed): advertise this code, avatar and name, and look for others. */
+    void start(String id, String name, int avatar) {
         if (!id.matches(ID_PATTERN)) return;
         this.id = id;
         byte[] n = nameBytes(name);
-        payload = new byte[1 + ID_LENGTH + n.length];
+        payload = new byte[1 + ID_LENGTH + 2 + n.length];
         payload[0] = VERSION;
         System.arraycopy(id.getBytes(StandardCharsets.US_ASCII), 0, payload, 1, ID_LENGTH);
-        System.arraycopy(n, 0, payload, 1 + ID_LENGTH, n.length);
+        payload[1 + ID_LENGTH] = (byte) ((avatar >> 8) & 0xFF);
+        payload[2 + ID_LENGTH] = (byte) (avatar & 0xFF);
+        System.arraycopy(n, 0, payload, 3 + ID_LENGTH, n.length);
         wanted = true;
         watchAdapter();
         stopRadio();
@@ -276,16 +279,19 @@ final class Nearby {
         ScanRecord record = r.getScanRecord();
         if (record == null) return;
         byte[] p = record.getManufacturerSpecificData(COMPANY);
-        if (p == null || p.length < 1 + ID_LENGTH || p[0] != VERSION) return;
+        if (p == null || p.length < 1 + ID_LENGTH || (p[0] != 1 && p[0] != 2)) return;
+        boolean hasAvatar = p[0] == 2 && p.length >= 3 + ID_LENGTH;
+        int avatar = hasAvatar ? ((p[1 + ID_LENGTH] & 0xFF) << 8) | (p[2 + ID_LENGTH] & 0xFF) : 0;
+        int nameAt = hasAvatar ? 3 + ID_LENGTH : 1 + ID_LENGTH;
         String peer = new String(p, 1, ID_LENGTH, StandardCharsets.US_ASCII);
         if (!peer.matches(ID_PATTERN) || peer.equals(id)) return;
         long now = SystemClock.elapsedRealtime();
         Long last = lastSent.get(peer);
         if (last != null && now - last < 1500) return;
         lastSent.put(peer, now);
-        String name = new String(p, 1 + ID_LENGTH, p.length - 1 - ID_LENGTH, StandardCharsets.UTF_8);
+        String name = new String(p, nameAt, p.length - nameAt, StandardCharsets.UTF_8);
         try {
-            events.emit(new JSONObject().put("type", "seen").put("id", peer).put("name", name).put("rssi", r.getRssi()));
+            events.emit(new JSONObject().put("type", "seen").put("id", peer).put("name", name).put("av", avatar).put("rssi", r.getRssi()));
         } catch (JSONException ignored) {
             // can't happen
         }

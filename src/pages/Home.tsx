@@ -18,6 +18,7 @@ import { useRepertoire } from '../state/repertoire';
 import { loadSetup, setupBot } from '../state/playSetup';
 import { useGames, userOutcome } from './Games';
 import { useOpponents, type Opponent } from '../state/opponents';
+import { Avatar } from '../components/Avatar';
 import { ANDROID_URL } from '../state/friend';
 import { isAndroidBrowser, isInstalled, isIOS } from '../lib/platform';
 import { Logo } from '../components/Widgets';
@@ -242,7 +243,7 @@ export function HomePage() {
 function FriendCard({ o }: { o: Opponent }) {
   return (
     <button className="fr-card" onClick={() => navigate(o.href)}>
-      <span className="fc-avatar">{monogram(o.name)}</span>
+      <Avatar av={o.av} name={o.name} className="fc-avatar" />
       <b>{o.name}</b>
       <span className={`fc-sub ${o.yourMove ? 'go' : ''}`}>{o.status}</span>
       <span className={`btn fc-btn ${o.yourMove ? 'primary' : ''}`}>{o.yourMove ? 'Your move' : o.active ? 'Open' : 'Challenge'}</span>

@@ -5,7 +5,8 @@ import { BluetoothSearching, Check, Send, Share2, UserPlus, X } from 'lucide-rea
 import { toast } from '../components/Widgets';
 import { navigate } from '../lib/router';
 import { copyText } from '../lib/platform';
-import { monogram } from '../lib/bots/bots';
+import { Avatar } from '../components/Avatar';
+import { cleanAvatar } from '../lib/avatars';
 import { formatCode } from '../lib/online/relay';
 import { closeness, nearbySupported, openNearbySettings, startNearby, type NearbyStatus } from '../lib/nearby';
 import { usePeople, type Person } from '../state/people';
@@ -16,7 +17,8 @@ import { ONLINE_CLOCKS } from './Online';
 const useMyName = () => useSettings((s) => (s.playerName === 'You' ? '' : s.playerName));
 
 /** A link that adds you as a friend in one tap: `#/friend?add=<code>&name=<name>`. */
-export const friendLink = (id: string, name: string) => `${baseUrl()}#/friend?add=${id}${name ? `&name=${encodeURIComponent(name)}` : ''}`;
+export const friendLink = (id: string, name: string, av: number) =>
+  `${baseUrl()}#/friend?add=${id}${name ? `&name=${encodeURIComponent(name)}` : ''}${av ? `&av=${av}` : ''}`;
 
 function invite(p: Person) {
   const code = usePeople.getState().invite(p.id);
@@ -24,7 +26,7 @@ function invite(p: Person) {
   navigate(`/online/${code}`);
 }
 
-export function PeopleCard({ addId, addName }: { addId?: string | null; addName?: string | null }) {
+export function PeopleCard({ addId, addName, addAv }: { addId?: string | null; addName?: string | null; addAv?: string | null }) {
   const ensureMe = usePeople((s) => s.ensureMe);
   const me = usePeople((s) => s.me);
   const people = usePeople((s) => s.people);
@@ -37,7 +39,7 @@ export function PeopleCard({ addId, addName }: { addId?: string | null; addName?
       <h2>
         <UserPlus size={22} className="ic-friends" /> Friends
       </h2>
-      {addId && <AddFromLink id={addId} name={addName ?? ''} />}
+      {addId && <AddFromLink id={addId} name={addName ?? ''} av={cleanAvatar(Number(addAv))} />}
       {nearbySupported() ? (
         <NearbyFinder />
       ) : (
@@ -54,7 +56,7 @@ export function PeopleCard({ addId, addName }: { addId?: string | null; addName?
 }
 
 /** Someone's "add me" link was opened. */
-function AddFromLink({ id, name }: { id: string; name: string }) {
+function AddFromLink({ id, name, av }: { id: string; name: string; av?: number }) {
   const add = usePeople((s) => s.add);
   const me = usePeople((s) => s.me);
   const known = usePeople((s) => s.people.some((p) => p.id === id));
@@ -62,7 +64,7 @@ function AddFromLink({ id, name }: { id: string; name: string }) {
   if (known) return <p className="people-note ok">{name || 'They'} are in your friends.</p>;
   return (
     <div className="people-note">
-      <span className="fc-avatar small">{monogram(name || 'Friend')}</span>
+      <Avatar av={av} name={name || 'Friend'} />
       <span className="pn-body">
         <b>Add {name || 'this player'}?</b>
         <span>Then you can invite each other with one tap.</span>
@@ -70,7 +72,7 @@ function AddFromLink({ id, name }: { id: string; name: string }) {
       <button
         className="btn primary small"
         onClick={() => {
-          if (add(id, name) === 'invalid') toast('That link is broken');
+          if (add(id, name, av) === 'invalid') toast('That link is broken');
           navigate('/friend');
         }}
       >
@@ -117,7 +119,7 @@ function FriendRow({ p }: { p: Person }) {
   const [removing, setRemoving] = useState(false);
   return (
     <div className="person-row">
-      <span className="fc-avatar small">{monogram(p.name)}</span>
+      <Avatar av={p.av} name={p.name} />
       <span className="pr-body">
         <b>{p.name}</b>
         <span>{formatCode(p.id)}</span>
@@ -148,6 +150,7 @@ function FriendRow({ p }: { p: Person }) {
 interface Seen {
   id: string;
   name: string;
+  av?: number;
   rssi: number;
   at: number;
 }
@@ -168,6 +171,7 @@ function NearbyFinder() {
   const friends = usePeople((s) => s.people);
   const add = usePeople((s) => s.add);
   const myName = useMyName();
+  const myAv = useSettings((s) => s.avatar);
   const [draft, setDraft] = useState('');
   const [on, setOn] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -176,7 +180,7 @@ function NearbyFinder() {
 
   useEffect(() => {
     if (!on || !myName) return;
-    const stop = startNearby(me, myName, (e) => {
+    const stop = startNearby(me, myName, myAv, (e) => {
       if (e.type === 'status') setStatus(e.status);
       else setSeen((s) => ({ ...s, [e.id]: { ...e, at: Date.now() } }));
     });
@@ -191,7 +195,7 @@ function NearbyFinder() {
       setStatus('off');
       setSeen({});
     };
-  }, [on, me, myName, attempt]);
+  }, [on, me, myName, myAv, attempt]);
 
   const list = Object.values(seen).sort((a, b) => b.rssi - a.rssi);
   const retry = () => setAttempt((x) => x + 1);
@@ -269,7 +273,7 @@ function NearbyFinder() {
             const friend = friends.find((f) => f.id === p.id);
             return (
               <div key={p.id} className="person-row">
-                <span className="fc-avatar small">{monogram(p.name || 'Player')}</span>
+                <Avatar av={friend?.av ?? p.av} name={friend?.name ?? (p.name || 'Player')} />
                 <span className="pr-body">
                   <b>{friend?.name ?? (p.name || 'Player')}</b>
                   <span>{closeness(p.rssi)}</span>
@@ -282,7 +286,7 @@ function NearbyFinder() {
                   <button
                     className="btn small"
                     onClick={() => {
-                      add(p.id, p.name);
+                      add(p.id, p.name, p.av);
                       toast(`${p.name || 'Player'} added`);
                     }}
                   >
@@ -300,8 +304,9 @@ function NearbyFinder() {
 
 function MyCode({ id }: { id: string }) {
   const name = useMyName();
+  const av = useSettings((s) => s.avatar);
   const share = async () => {
-    const url = friendLink(id, name);
+    const url = friendLink(id, name, av);
     const text = `Add me on Grandmasters so we can play chess: open the link, or enter my friend code ${formatCode(id)}.`;
     if (typeof navigator.share === 'function') {
       try {
@@ -316,8 +321,11 @@ function MyCode({ id }: { id: string }) {
   };
   return (
     <div className="my-code">
+      <button className="mc-me" onClick={() => navigate('/profile')} aria-label="Edit your profile">
+        <Avatar av={av} name={name || 'Me'} />
+      </button>
       <span className="mc-body">
-        <span>Your friend code</span>
+        <span>{name ? `${name} · your friend code` : 'Your friend code'}</span>
         <b>{formatCode(id)}</b>
       </span>
       <button className="btn small" onClick={() => void share()}>

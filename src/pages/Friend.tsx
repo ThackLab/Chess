@@ -39,7 +39,7 @@ async function sendLink(g: FriendGame) {
 }
 
 /** `#/friend`: start a game against a person, and the games by link in progress. */
-export function FriendHome({ addId, addName }: { addId?: string | null; addName?: string | null } = {}) {
+export function FriendHome({ addId, addName, addAv }: { addId?: string | null; addName?: string | null; addAv?: string | null } = {}) {
   const { games, createLocal, createLink } = useFriends();
   const myName = useSettings((s) => (s.playerName === 'You' ? '' : s.playerName));
   const [tc, setTc] = useState(0);
@@ -52,7 +52,7 @@ export function FriendHome({ addId, addName }: { addId?: string | null; addName?
   return (
     <div className="page narrow friend">
       <PageHead title="Play a friend" back="/" />
-      <PeopleCard addId={addId} addName={addName} />
+      <PeopleCard addId={addId} addName={addName} addAv={addAv} />
       <OnlineLobby />
 
       {ongoing.length > 0 && (

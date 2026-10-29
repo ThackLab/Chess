@@ -5,6 +5,7 @@ import { importAll, wipeAll, type Backup } from '../lib/storage/db';
 import { backupNow } from '../lib/backup';
 import { useLearn } from '../state/learn';
 import { useProfile } from '../state/profile';
+import { navigate } from '../lib/router';
 import { useSettings } from '../state/settings';
 import { themeOf } from '../lib/appearance';
 import { ListRow, PageHead } from '../components/ui';
@@ -139,8 +140,10 @@ export function SettingsPage() {
 
         <section className="card">
           <h2>Profile</h2>
-          <Row title="Display name">
-            <input value={s.playerName} onChange={(e) => s.set({ playerName: e.target.value })} style={{ width: 160 }} />
+          <Row title="Name and avatar" desc="What friends see in invites, live games and nearby.">
+            <button className="btn small" onClick={() => navigate('/profile')}>
+              Edit profile
+            </button>
           </Row>
           <Row title="Rating vs bots" desc="Starts at 1000 and adjusts after each rated bot game. Set it to your real rating if you like.">
             <div className="row">

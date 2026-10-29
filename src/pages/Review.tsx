@@ -23,6 +23,8 @@ import { getGame, getReview, onDbChange, saveGame, savePuzzles, saveReview, type
 import { summariseGame } from '../lib/review/review';
 import { puzzlesFrom, useReviewer } from '../state/reviewer';
 import { monogram } from '../lib/bots/bots';
+import { AvatarFace } from '../components/Avatar';
+import { useSettings } from '../state/settings';
 import type { Score } from '../lib/engine/uci';
 import { CountUp, Moves, Rich, San } from '../components/Rich';
 import { RepertoireNote } from './Openings';
@@ -351,13 +353,14 @@ export function ReviewPage({ gameId }: { gameId: string }) {
   const top = orientation === 'white' ? 'b' : 'w';
   const bottom = top === 'w' ? 'b' : 'w';
   const info = (c: 'w' | 'b') => (c === 'w' ? game.white : game.black);
+  const myAvatar = useSettings.getState().avatar;
   const summary = (c: 'w' | 'b') => (review ? (c === 'w' ? review.white : review.black) : null);
   const bar = (c: 'w' | 'b') => {
     const p = info(c);
     const s = summary(c);
     return (
       <PlayerBar
-        avatar={monogram(p.name || (c === 'w' ? 'White' : 'Black'))}
+        avatar={p.isUser ? <AvatarFace av={myAvatar} name={p.name || 'You'} /> : monogram(p.name || (c === 'w' ? 'White' : 'Black'))}
         tint={undefined}
         name={p.name}
         elo={p.elo}

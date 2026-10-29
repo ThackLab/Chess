@@ -16,24 +16,24 @@ export type NearbyStatus =
   | 'unsupported'
   | 'failed';
 
-export type NearbyEvent = { type: 'status'; status: NearbyStatus } | { type: 'seen'; id: string; name: string; rssi: number };
+export type NearbyEvent = { type: 'status'; status: NearbyStatus } | { type: 'seen'; id: string; name: string; av?: number; rssi: number };
 
 interface NearbyBridge {
-  nearbyStart(id: string, name: string): void;
+  nearbyStart(id: string, name: string, avatar: number): void;
   nearbyStop(): void;
   openSettings(which: 'bluetooth' | 'location' | 'app'): void;
 }
 
 const bridge = () => (globalThis as { GrandmastersAndroid?: Partial<NearbyBridge> }).GrandmastersAndroid;
 
-/** The Android app, version 1.4 or later. */
+/** The Android app, version 1.4 or later (1.5 for avatars). */
 export const nearbySupported = () => typeof bridge()?.nearbyStart === 'function';
 
 type Receiver = (json: string) => void;
 const win = globalThis as { __grandmastersNearby?: Receiver };
 
-/** Starts showing this phone to others nearby and looking for them; returns a function that stops. */
-export function startNearby(id: string, name: string, on: (e: NearbyEvent) => void): () => void {
+/** Starts showing this phone (code, name and avatar) to others nearby and looking for them; returns a function that stops. */
+export function startNearby(id: string, name: string, avatar: number, on: (e: NearbyEvent) => void): () => void {
   const b = bridge();
   if (!b?.nearbyStart) return () => {};
   const receive: Receiver = (json) => {
@@ -44,7 +44,7 @@ export function startNearby(id: string, name: string, on: (e: NearbyEvent) => vo
     }
   };
   win.__grandmastersNearby = receive;
-  b.nearbyStart(id, name);
+  b.nearbyStart(id, name, avatar);
   return () => {
     if (win.__grandmastersNearby === receive) {
       delete win.__grandmastersNearby;

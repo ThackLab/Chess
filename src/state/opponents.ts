@@ -2,11 +2,13 @@
 // entry per opponent.
 import { useMemo } from 'react';
 import { useFriends, turnOf } from './friend';
-import { useOnline } from './online';
+import { avatarOf, useOnline } from './online';
+import { usePeople } from './people';
 
 export interface Opponent {
   key: string;
   name: string;
+  av?: number;
   /** Where tapping the card goes. */
   href: string;
   status: string;
@@ -19,7 +21,10 @@ export interface Opponent {
 export function useOpponents(): Opponent[] {
   const online = useOnline((s) => s.games);
   const friends = useFriends((s) => s.games);
+  const people = usePeople((s) => s.people);
   return useMemo(() => {
+    // Games by link carry no avatar: use the friend's, if they're one.
+    const avByName = new Map(people.filter((p) => p.av).map((p) => [p.name.toLowerCase(), p.av]));
     const out = new Map<string, Opponent>();
     const add = (o: Opponent) => {
       const k = o.name.toLowerCase();
@@ -37,6 +42,7 @@ export function useOpponents(): Opponent[] {
       add({
         key: `o-${g.code}`,
         name: them,
+        av: avatarOf(g.s, g.me === 'w' ? 'b' : 'w') ?? avByName.get(them.toLowerCase()),
         href: `/online/${g.code}`,
         status: rematchForYou ? 'Wants a rematch' : g.s.r ? 'Game over' : yourMove ? 'Your move' : 'Their move',
         yourMove: yourMove || rematchForYou,
@@ -51,6 +57,7 @@ export function useOpponents(): Opponent[] {
       add({
         key: `f-${g.id}`,
         name: them,
+        av: avByName.get(them.toLowerCase()),
         href: `/friend/${g.id}`,
         status: g.result ? 'Game over' : yourMove ? 'Your move (by link)' : 'Their move (by link)',
         yourMove,
@@ -59,5 +66,5 @@ export function useOpponents(): Opponent[] {
       });
     }
     return [...out.values()].sort((a, b) => Number(b.yourMove) - Number(a.yourMove) || b.at - a.at);
-  }, [online, friends]);
+  }, [online, friends, people]);
 }

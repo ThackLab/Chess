@@ -8,23 +8,27 @@ import { persist } from 'zustand/middleware';
 import { newCode, normaliseCode, relay } from '../lib/online/relay';
 import { useOnline, type Clock } from './online';
 import { useSettings } from './settings';
+import { cleanAvatar } from '../lib/avatars';
 
 export interface Person {
   id: string;
   name: string;
+  /** Their avatar (src/lib/avatars.ts), as they last sent it. */
+  av?: number;
   addedAt: number;
 }
 
 interface From {
   id: string;
   name: string;
+  av?: number;
 }
 
 /** What travels through an inbox. */
 export type Note =
   | { v: 1; t: 'invite'; mid: string; from: From; code: string; tc: Clock | null; at: number }
-  /** "I added you as a friend." */
-  | { v: 1; t: 'hello'; mid: string; from: From; at: number }
+  /** "I added you as a friend", or (upd) "here's my new name and avatar". */
+  | { v: 1; t: 'hello'; mid: string; from: From; at: number; upd?: boolean }
   /** "Can't play right now", in answer to an invite. */
   | { v: 1; t: 'decline'; mid: string; from: From; code: string; at: number };
 
@@ -41,8 +45,13 @@ export function parseNote(x: unknown, now = Date.now()): Note | null {
   if (n.at < now - INVITE_TTL || n.at > now + 2 * 60_000) return null;
   const f = n.from as Partial<From> | undefined;
   if (!f || !isCode(f.id) || typeof f.name !== 'string') return null;
-  const base = { v: 1 as const, mid: n.mid.slice(0, 16), from: { id: f.id, name: f.name.trim().slice(0, MAX_NAME) || 'Player' }, at: n.at };
-  if (n.t === 'hello') return { ...base, t: 'hello' };
+  const base = {
+    v: 1 as const,
+    mid: n.mid.slice(0, 16),
+    from: { id: f.id, name: f.name.trim().slice(0, MAX_NAME) || 'Player', av: cleanAvatar(f.av) },
+    at: n.at,
+  };
+  if (n.t === 'hello') return { ...base, t: 'hello', ...(n.upd === true ? { upd: true } : {}) };
   if (!isCode(n.code)) return null;
   if (n.t === 'decline') return { ...base, t: 'decline', code: n.code };
   if (n.t !== 'invite') return null;
@@ -78,7 +87,7 @@ interface PeopleStore {
   incoming: Note[];
   ensureMe: () => string;
   /** Adds a friend and lets them know. */
-  add: (id: string, name: string) => 'added' | 'already' | 'self' | 'invalid';
+  add: (id: string, name: string, av?: number) => 'added' | 'already' | 'self' | 'invalid';
   remove: (id: string) => void;
   setClock: (tc: Clock | null) => void;
   /** Creates a live game and invites a friend to it; returns the game's code. */
@@ -96,7 +105,7 @@ export const usePeople = create<PeopleStore>()(
     (set, get) => {
       const close = (mid: string) =>
         set((st) => ({ incoming: st.incoming.filter((n) => n.mid !== mid), done: [...st.done.filter((d) => d !== mid), mid].slice(-200) }));
-      const from = (): From => ({ id: get().ensureMe(), name: myName() || 'Player' });
+      const from = (): From => ({ id: get().ensureMe(), name: myName() || 'Player', av: useSettings.getState().avatar || undefined });
       return {
         me: null,
         people: [],
@@ -111,16 +120,17 @@ export const usePeople = create<PeopleStore>()(
           set({ me: id });
           return id;
         },
-        add: (raw, name) => {
+        add: (raw, name, av) => {
           const id = normaliseCode(raw);
           if (!id) return 'invalid';
           if (id === get().ensureMe()) return 'self';
           const clean = name.trim().slice(0, MAX_NAME);
+          const pic = cleanAvatar(av);
           if (get().people.some((p) => p.id === id)) {
-            if (clean) set((st) => ({ people: st.people.map((p) => (p.id === id ? { ...p, name: clean } : p)) }));
+            if (clean) set((st) => ({ people: st.people.map((p) => (p.id === id ? { ...p, name: clean, av: pic ?? p.av } : p)) }));
             return 'already';
           }
-          set((st) => ({ people: [...st.people, { id, name: clean || 'Friend', addedAt: Date.now() }] }));
+          set((st) => ({ people: [...st.people, { id, name: clean || 'Friend', av: pic, addedAt: Date.now() }] }));
           void relay.send(id, { v: 1, t: 'hello', mid: newCode(), from: from(), at: Date.now() }, false);
           return 'added';
         },
@@ -139,10 +149,11 @@ export const usePeople = create<PeopleStore>()(
           const st = get();
           if (!n || n.from.id === st.me || st.done.includes(n.mid) || st.incoming.some((x) => x.mid === n.mid)) return;
           const known = st.people.find((p) => p.id === n.from.id);
-          if (known && known.name !== n.from.name) {
-            set((s) => ({ people: s.people.map((p) => (p.id === known.id ? { ...p, name: n.from.name } : p)) }));
+          if (known && (known.name !== n.from.name || known.av !== n.from.av)) {
+            set((s) => ({ people: s.people.map((p) => (p.id === known.id ? { ...p, name: n.from.name, av: n.from.av } : p)) }));
           }
-          if (n.t === 'hello' && known) return close(n.mid);
+          // A friend's new look is applied quietly; from someone who isn't a friend it's ignored.
+          if (n.t === 'hello' && (known || n.upd)) return close(n.mid);
           if (n.t === 'decline') {
             if (!st.sent.some((x) => x.code === n.code && x.to === n.from.id)) return close(n.mid);
             useOnline.getState().abort(n.code);
@@ -156,7 +167,7 @@ export const usePeople = create<PeopleStore>()(
           if (!n || n.t !== 'invite') return null;
           close(mid);
           if (!get().people.some((p) => p.id === n.from.id)) {
-            set((st) => ({ people: [...st.people, { id: n.from.id, name: n.from.name, addedAt: Date.now() }] }));
+            set((st) => ({ people: [...st.people, { id: n.from.id, name: n.from.name, av: n.from.av, addedAt: Date.now() }] }));
           }
           void relay.clearInbox(get().ensureMe());
           return n.code;
@@ -180,7 +191,18 @@ export const usePeople = create<PeopleStore>()(
   ),
 );
 
-/** Listens to this player's inbox while the app is open. Mounted once, in App. */
+/** Sends friends this player's new name and avatar. */
+export function sendProfile() {
+  const st = usePeople.getState();
+  if (!st.me || !st.people.length) return;
+  const from: From = { id: st.me, name: myName() || 'Player', av: useSettings.getState().avatar || undefined };
+  for (const p of st.people) void relay.send(p.id, { v: 1, t: 'hello', upd: true, mid: newCode(), from, at: Date.now() }, false);
+}
+
+/**
+ * Listens to this player's inbox while the app is open, and tells friends
+ * when the name or avatar changes. Mounted once, in App.
+ */
 export function useInboxSync() {
   const me = usePeople((s) => s.me);
   useEffect(() => {
@@ -188,6 +210,16 @@ export function useInboxSync() {
     const off = relay.inbox(me, (kind, data) => {
       if (kind === 'inbox') usePeople.getState().receive(data);
     });
-    return () => void off.then((f) => f());
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsub = useSettings.subscribe((s, prev) => {
+      if (s.playerName === prev.playerName && s.avatar === prev.avatar) return;
+      clearTimeout(timer);
+      timer = setTimeout(sendProfile, 4000);
+    });
+    return () => {
+      clearTimeout(timer);
+      unsub();
+      void off.then((f) => f());
+    };
   }, [me]);
 }

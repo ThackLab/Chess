@@ -1282,3 +1282,202 @@
   gap: 8px;
   margin-left: auto;
 }
+
+/* Avatars (components/Avatar.tsx): the art fills whatever box it's in. */
+.av-box,
+.avatar,
+.pb-avatar,
+.h-avatar {
+  position: relative;
+  overflow: hidden;
+}
+.av-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.ptag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+.you-avatar-btn,
+.mc-me {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 12px;
+}
+.you-head .you-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+.invite-pop .invite-av {
+  width: 48px;
+  height: 48px;
+  font-size: 1rem;
+}
+
+/* The profile editor (pages/Profile.tsx). */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+}
+.profile-avatar {
+  width: 112px;
+  height: 112px;
+  flex: none;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 2.2rem;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.ph-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.profile-name {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 1.3rem;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+.ph-line {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.profile .muted.small {
+  font-size: 0.85rem;
+  margin: 10px 2px 0;
+}
+.profile-h {
+  margin: 24px 0 10px;
+  font-size: 1.15rem;
+}
+.type-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  margin: 0 -2px;
+  scrollbar-width: none;
+}
+.type-chips::-webkit-scrollbar {
+  display: none;
+}
+.type-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: var(--surface-3);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.type-chip.on {
+  background: var(--surface-2);
+}
+.type-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-l);
+  border: 2px solid;
+  background: var(--surface-2);
+  margin-bottom: 12px;
+}
+.type-card .tc-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.type-card .tc-body {
+  display: grid;
+  gap: 2px;
+}
+.type-card .tc-body b {
+  font-size: 1.1rem;
+}
+.type-card .tc-body span {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+.av-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.av-pick {
+  position: relative;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 14px;
+  background: none;
+  cursor: pointer;
+  aspect-ratio: 1;
+}
+.av-pick .av-tile {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  background: var(--surface-3);
+}
+.av-pick:active {
+  transform: scale(0.96);
+}
+.av-check {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border: 2px solid var(--bg);
+}
+.profile .btn-row {
+  margin-bottom: 10px;
+}
+.credit {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin: 14px 2px 0;
+}
+.credit a {
+  color: inherit;
+}

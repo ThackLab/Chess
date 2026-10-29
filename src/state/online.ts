@@ -14,6 +14,7 @@ import { getOpeningBook } from '../lib/chess/openings';
 import { saveGame, type GameRecord, type GameResult } from '../lib/storage/db';
 import { playSound, soundForSan } from '../lib/sound';
 import { canMate, ruleResult } from './game';
+import { useSettings } from './settings';
 
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -29,6 +30,9 @@ export interface Wire {
   /** Names; empty until that player has joined. */
   w: string;
   b: string;
+  /** Avatars (src/lib/avatars.ts), from app 1.5. */
+  wa?: number;
+  ba?: number;
   tc: Clock | null;
   /** Moves in UCI. */
   m: string[];
@@ -55,6 +59,10 @@ export interface OnlineGame {
 }
 
 const other = (c: Color): Color => (c === 'w' ? 'b' : 'w');
+const myAvatar = () => useSettings.getState().avatar || undefined;
+
+/** A side's avatar in a game. */
+export const avatarOf = (s: Wire, c: Color): number | undefined => (c === 'w' ? s.wa : s.ba);
 
 /** Replays a state's moves; null if any is illegal. */
 export function replay(m: string[]): { chess: Chess; sans: string[] } | null {
@@ -197,6 +205,7 @@ export const useOnline = create<OnlineStore>()(
             host,
             w: host === 'w' ? name : '',
             b: host === 'b' ? name : '',
+            [`${host}a`]: myAvatar(),
             tc,
             m: [],
             c: tc ? { w: tc.initial, b: tc.initial } : undefined,
@@ -220,7 +229,7 @@ export const useOnline = create<OnlineStore>()(
             return;
           }
           put(code, (x) => ({ ...x, me: seat }));
-          commit(code, (s) => ({ ...s, [seat]: name || 'Guest' }));
+          commit(code, (s) => ({ ...s, [seat]: name || 'Guest', [`${seat}a`]: myAvatar() }));
         },
         receive: (code, data) => {
           const g = find(code);

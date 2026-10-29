@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Check, ChessKnight, Flame, GraduationCap, Puzzle, UserRound } from 'lucide-react';
+import { Check, ChessKnight, Flame, GraduationCap, Pencil, Puzzle } from 'lucide-react';
 import { LEVELS, currentLevel, levelPassed } from '../lib/learn/levels';
 import { findLesson } from '../lib/learn/curriculum';
 import { navigate } from '../lib/router';
@@ -10,6 +10,9 @@ import { THEME_SETS } from './Puzzles';
 import { GameListRow, useGames } from './Games';
 import { CountUp } from '../components/Rich';
 import { backupNow, snoozeBackup, useBackupDue } from '../lib/backup';
+import { Avatar, PersonalityTag } from '../components/Avatar';
+import { personalityOf } from '../lib/avatars';
+import { useSettings } from '../state/settings';
 
 export function YouPage() {
   const backupDue = useBackupDue();
@@ -19,6 +22,9 @@ export function YouPage() {
   const level = currentLevel(learn);
   const streak = liveStreak(learn);
   const passed = LEVELS.filter((l) => levelPassed(learn, l)).length;
+  const name = useSettings((s) => (s.playerName === 'You' ? '' : s.playerName));
+  const av = useSettings((s) => s.avatar);
+  const type = personalityOf(av);
 
   const skills = useMemo(
     () =>
@@ -42,11 +48,12 @@ export function YouPage() {
   return (
     <div className="page narrow">
       <header className="you-head">
-        <span className="you-avatar">
-          <UserRound size={32} />
-        </span>
-        <div style={{ minWidth: 0 }}>
-          <h1 style={{ margin: 0 }}>You</h1>
+        <button className="you-avatar-btn" onClick={() => navigate('/profile')} aria-label="Edit your profile">
+          <Avatar av={av} name={name || 'Me'} className="you-avatar" />
+        </button>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h1 style={{ margin: 0 }}>{name || 'You'}</h1>
+          {type && <PersonalityTag p={type} />}
           <div className="muted" style={{ fontSize: '0.9rem' }}>
             Level {level.n} · {level.name}
             {streak > 0 && (
@@ -57,6 +64,9 @@ export function YouPage() {
             )}
           </div>
         </div>
+        <button className="btn small" onClick={() => navigate('/profile')}>
+          <Pencil size={15} /> Edit
+        </button>
       </header>
 
       {backupDue && (

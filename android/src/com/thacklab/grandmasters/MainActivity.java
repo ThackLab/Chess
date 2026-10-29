@@ -242,13 +242,13 @@ public class MainActivity extends Activity {
             }
         }
 
-        /** Starts looking for people nearby, showing this friend code and name to them (see Nearby). */
+        /** Starts looking for people nearby, showing this friend code, name and avatar to them (see Nearby). */
         @JavascriptInterface
-        public void nearbyStart(final String id, final String name) {
+        public void nearbyStart(final String id, final String name, final int avatar) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    nearby.start(id, name);
+                    nearby.start(id, name, avatar);
                 }
             });
         }

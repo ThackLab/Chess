@@ -6,6 +6,7 @@ import { ArrowUpDown, ChevronLeft, ChevronRight, Flag, Handshake, Lightbulb, Mic
 import type { DrawShape } from 'chessground/draw';
 import { Board, type BoardHandle, type PromotionPiece } from '../components/Board';
 import { EvalBar, Modal, PlayerBar, formatClock, toast } from '../components/Widgets';
+import { AvatarFace } from '../components/Avatar';
 import { MoveList, MoveStrip } from '../components/MoveList';
 import { botAcceptsDraw, chooseBotMove, thinkTime } from '../lib/bots/brain';
 import { getAnalysisEngine, getBotEngine } from '../lib/engine/manager';
@@ -249,7 +250,7 @@ export function GamePage() {
   const userName = settings.playerName || 'You';
   const playerFor = (c: 'w' | 'b') =>
     c === userColor
-      ? { avatar: monogram(userName || 'You'), tint: undefined, name: userName, elo: rating }
+      ? { avatar: <AvatarFace av={settings.avatar} name={userName || 'You'} />, tint: undefined, name: userName, elo: rating }
       : { avatar: monogram(bot.name), tint: undefined, name: bot.name, elo: bot.elo };
   const playing = game.status === 'playing';
   const userToMove = playing && chess.turn() === userColor;

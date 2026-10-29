@@ -106,6 +106,22 @@ describe('friends and invites', () => {
     expect(usePeople.getState().incoming).toHaveLength(1);
   });
 
+  it('carries avatars, and ignores a profile update from someone who isn’t a friend', () => {
+    usePeople.getState().receive(invite({ from: { id: ALEX, name: 'Alex', av: 5000 } }));
+    expect(usePeople.getState().incoming[0].from.av).toBe(5000);
+    usePeople.getState().accept('m1');
+    expect(usePeople.getState().people[0].av).toBe(5000);
+    // A new look from a friend is applied quietly.
+    usePeople.getState().receive({ v: 1, t: 'hello', upd: true, mid: 'u1', from: { id: ALEX, name: 'Alex', av: 6000 }, at: Date.now() });
+    expect(usePeople.getState().people[0].av).toBe(6000);
+    expect(usePeople.getState().incoming).toHaveLength(0);
+    // From a stranger: no "added you" pop-up.
+    usePeople.getState().receive({ v: 1, t: 'hello', upd: true, mid: 'u2', from: { id: 'B0B0000000', name: 'Bob' }, at: Date.now() });
+    expect(usePeople.getState().incoming).toHaveLength(0);
+    // Junk avatars are dropped.
+    expect(parseNote(invite({ from: { id: ALEX, name: 'Alex', av: 'x' } }))!.from.av).toBeUndefined();
+  });
+
   it('asks to add back someone who added you, and updates known friends silently', () => {
     usePeople.getState().receive({ v: 1, t: 'hello', mid: 'h1', from, at: Date.now() });
     expect(usePeople.getState().incoming).toMatchObject([{ t: 'hello' }]);

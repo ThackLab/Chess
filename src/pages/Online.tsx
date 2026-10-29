@@ -11,9 +11,20 @@ import { navigate } from '../lib/router';
 import { copyText } from '../lib/platform';
 import { playSound } from '../lib/sound';
 import { ANDROID_URL, baseUrl } from '../state/friend';
-import { replay, tcLabel, timeLeft, useHeartbeat, useOnline, usePresence, useRelayStatus, type Clock, type OnlineGame } from '../state/online';
+import {
+  avatarOf,
+  replay,
+  tcLabel,
+  timeLeft,
+  useHeartbeat,
+  useOnline,
+  usePresence,
+  useRelayStatus,
+  type Clock,
+  type OnlineGame,
+} from '../state/online';
 import { useSettings } from '../state/settings';
-import { monogram } from '../lib/bots/bots';
+import { Avatar } from '../components/Avatar';
 
 export const ONLINE_CLOCKS: { label: string; tc: Clock | null }[] = [
   { label: '1 min', tc: { initial: 60_000, increment: 0 } },
@@ -126,7 +137,7 @@ function OnlineRow({ g }: { g: OnlineGame }) {
   const mine = !!(s.w && s.b) && toMove === g.me;
   return (
     <button className="today-item" onClick={() => navigate(`/online/${g.code}`)}>
-      <span className="fc-avatar small">{monogram(them)}</span>
+      <Avatar av={g.me ? avatarOf(s, g.me === 'w' ? 'b' : 'w') : undefined} name={them} />
       <span className="ti-body">
         <span className="ti-title">{s.w && s.b ? `vs ${them}` : 'Challenge sent'}</span>
         <span className="ti-sub">
@@ -234,7 +245,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
       <div className="page narrow">
         <PageHead title="You’re invited" back="/friend" />
         <section className="friend-card online-card invite">
-          <span className="fc-avatar big">{monogram(s[host] || '?')}</span>
+          <Avatar av={avatarOf(s, host)} name={s[host] || '?'} className="fc-avatar big" />
           <h2>{free ? `${s[host] || 'A friend'} challenges you` : 'This game has two players'}</h2>
           <p className="muted">
             {free ? `${tcLabel(s.tc)} · you play ${guestSeat === 'w' ? 'White' : 'Black'}` : `${s.w} vs ${s.b}. You can watch it live.`}
@@ -291,7 +302,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
     <div className="game-layout focus-screen play-screen">
       <div className="board-column">
         <div className="player-bar">
-          <span className="pb-avatar">{s[top] ? monogram(s[top]) : '?'}</span>
+          {s[top] ? <Avatar av={avatarOf(s, top)} name={s[top]} className="pb-avatar" /> : <span className="pb-avatar">?</span>}
           <b>{name_(top)}</b>
           {started && <Presence code={code} side={top} />}
           <span className="spacer" />
@@ -310,7 +321,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
           />
         </div>
         <div className="player-bar">
-          <span className="pb-avatar">{s[bottom] ? monogram(s[bottom]) : '?'}</span>
+          {s[bottom] ? <Avatar av={avatarOf(s, bottom)} name={s[bottom]} className="pb-avatar" /> : <span className="pb-avatar">?</span>}
           <b>{name_(bottom)}</b>
           {started && <Presence code={code} side={bottom} />}
           <span className="spacer" />

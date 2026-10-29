@@ -28,6 +28,7 @@ import { PuzzleSessionPage } from './pages/PuzzleSession';
 import { RushPage } from './pages/Rush';
 import { ExamPage } from './pages/Exam';
 import { YouPage } from './pages/You';
+import { ProfilePage } from './pages/Profile';
 
 /** Board screens take the whole phone screen (no menu bar). */
 function isFocus(parts: string[]): boolean {
@@ -104,6 +105,9 @@ export function App() {
     case 'you':
       page = <YouPage />;
       break;
+    case 'profile':
+      page = <ProfilePage />;
+      break;
     case 'import':
       page = <ImportPage />;
       break;
@@ -129,7 +133,7 @@ export function App() {
         ) : id ? (
           <FriendBoard key={id} id={id} />
         ) : (
-          <FriendHome addId={normaliseCode(route.query.get('add') ?? '')} addName={route.query.get('name')} />
+          <FriendHome addId={normaliseCode(route.query.get('add') ?? '')} addName={route.query.get('name')} addAv={route.query.get('av')} />
         );
       break;
     default:
