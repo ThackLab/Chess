@@ -54,10 +54,10 @@ Everything the app is made of is in this repository, and both the website and th
   - *Live games:* the name you type and your moves, through public MQTT relays (`broker.emqx.io`, `broker.hivemq.com`, `test.mosquitto.org`), encrypted with a key made from the game code (see below). The relays, like any server you connect to, see your IP address.
   - *Importing games:* your chess.com or lichess username goes to `api.chess.com` or `lichess.org` to fetch your public games.
   - *AI coach:* off by default; with your own Anthropic API key it sends the game you ask about to Anthropic. The key stays on your device.
+  - *Games by link:* the whole game travels inside the link you send; nothing else is involved.
   - *The app itself:* loading the website fetches it from GitHub Pages. The Android app needs no download at all to run.
 - **Checking the APK:** the build writes the APK's SHA-256 fingerprint next to it ([grandmasters.apk.sha256](https://thacklab.github.io/Chess/grandmasters.apk.sha256)) and into the build log. Compare it with the file you were sent (`sha256sum grandmasters.apk`, or any SHA-256 app), or build the APK yourself from this code (below). The APK is signed with uber-apk-signer's public debug key, so the signature alone doesn't say who built it; the fingerprint does.
 
-Games by link travel in the links themselves.
 
 **How live games work.** There is no game server: moves go through free public MQTT brokers (EMQX, HiveMQ and Mosquitto's test broker, all at once, so a game survives one of them being down). Every message holds the whole game with a version number and is encrypted (AES-GCM) with a key made from the game code, under a topic that is a hash of the code, so the brokers only see noise. Each device checks every state it receives: the moves must be legal and follow on from the moves it already has, and only the opponent's moves are accepted. The latest state is kept on the broker, so whoever reconnects gets it straight away. `src/lib/online/mqtt.ts` is a small MQTT-over-WebSocket client, `src/lib/online/relay.ts` the encryption and brokers, and `src/state/online.ts` the game rules (`src/state/online.test.ts` tests them).
 
