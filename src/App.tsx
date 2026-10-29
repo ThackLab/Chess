@@ -17,6 +17,9 @@ import { InsightsPage } from './pages/Insights';
 import { FriendBoard, FriendHome, FriendJoin } from './pages/Friend';
 import { OnlineGamePage } from './pages/Online';
 import { useOnlineSync } from './state/online';
+import { useInboxSync } from './state/people';
+import { normaliseCode } from './lib/online/relay';
+import { InvitePopup } from './components/InvitePopup';
 import { OpeningDrill, OpeningsPage } from './pages/Openings';
 import { LearnPage } from './pages/Learn';
 import { LessonPage } from './pages/Lesson';
@@ -46,6 +49,7 @@ export function App() {
     main.current?.scrollTo(0, 0);
   }, [route.path]);
   useOnlineSync();
+  useInboxSync();
   const [menu, setMenu] = useState(false);
   const closeMenu = useCallback(() => setMenu(false), []);
   // A new screen closes the menu.
@@ -119,7 +123,14 @@ export function App() {
       page = id ? <OnlineGamePage key={id} code={id} autoJoin={route.query.get('accept') === '1'} /> : <FriendHome />;
       break;
     case 'friend':
-      page = id === 'join' ? <FriendJoin d={route.query.get('d')} /> : id ? <FriendBoard key={id} id={id} /> : <FriendHome />;
+      page =
+        id === 'join' ? (
+          <FriendJoin d={route.query.get('d')} />
+        ) : id ? (
+          <FriendBoard key={id} id={id} />
+        ) : (
+          <FriendHome addId={normaliseCode(route.query.get('add') ?? '')} addName={route.query.get('name')} />
+        );
       break;
     default:
       page = (
@@ -140,6 +151,7 @@ export function App() {
         {page}
       </main>
       <SideMenu open={menu} onClose={closeMenu} path={route.path} />
+      <InvitePopup />
     </div>
   );
 }

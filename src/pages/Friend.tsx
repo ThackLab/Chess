@@ -14,6 +14,7 @@ import { navigate } from '../lib/router';
 import { copyText } from '../lib/platform';
 import { playSound, soundForSan } from '../lib/sound';
 import { OnlineLobby } from './Online';
+import { PeopleCard } from './People';
 
 const CLOCKS: { label: string; tc: { initial: number; increment: number } | null }[] = [
   { label: 'No clock', tc: null },
@@ -38,7 +39,7 @@ async function sendLink(g: FriendGame) {
 }
 
 /** `#/friend`: start a game against a person, and the games by link in progress. */
-export function FriendHome() {
+export function FriendHome({ addId, addName }: { addId?: string | null; addName?: string | null } = {}) {
   const { games, createLocal, createLink } = useFriends();
   const myName = useSettings((s) => (s.playerName === 'You' ? '' : s.playerName));
   const [tc, setTc] = useState(0);
@@ -51,6 +52,7 @@ export function FriendHome() {
   return (
     <div className="page narrow friend">
       <PageHead title="Play a friend" back="/" />
+      <PeopleCard addId={addId} addName={addName} />
       <OnlineLobby />
 
       {ongoing.length > 0 && (

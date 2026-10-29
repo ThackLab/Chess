@@ -6,6 +6,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,6 +45,7 @@ public class MainActivity extends Activity {
 
     private WebView web;
     private ValueCallback<Uri[]> pendingFiles;
+    private Nearby nearby;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -59,8 +62,19 @@ public class MainActivity extends Activity {
         web.setBackgroundColor(0xFF302E2B);
         web.setWebViewClient(new AssetClient());
         web.setWebChromeClient(new FileChooserClient());
-        web.addJavascriptInterface(new Bridge(), "OutpostAndroid");
+        web.addJavascriptInterface(new Bridge(), "GrandmastersAndroid");
         setContentView(web);
+        nearby = new Nearby(this, new Nearby.Events() {
+            @Override
+            public void emit(final JSONObject event) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        web.evaluateJavascript("window.__grandmastersNearby && window.__grandmastersNearby(" + JSONObject.quote(event.toString()) + ")", null);
+                    }
+                });
+            }
+        });
         if (state == null || web.restoreState(state) == null) web.loadUrl(START_URL);
     }
 
@@ -77,9 +91,31 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        nearby.pause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        nearby.resume();
+    }
+
+    @Override
     protected void onDestroy() {
+        nearby.stop();
         web.destroy();
         super.onDestroy();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode != Nearby.PERMISSION_REQUEST) return;
+        boolean granted = results.length > 0;
+        for (int r : results) granted &= r == PackageManager.PERMISSION_GRANTED;
+        nearby.onPermissions(granted);
     }
 
     @Override
@@ -159,7 +195,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Exposed to the page as window.OutpostAndroid. */
+    /** Exposed to the page as window.GrandmastersAndroid. */
     private class Bridge {
         @JavascriptInterface
         public String saveFile(String name, String mime, String content) {
@@ -204,6 +240,38 @@ public class MainActivity extends Activity {
             } catch (NumberFormatException e) {
                 // ignore a malformed pattern
             }
+        }
+
+        /** Starts looking for people nearby, showing this friend code and name to them (see Nearby). */
+        @JavascriptInterface
+        public void nearbyStart(final String id, final String name) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    nearby.start(id, name);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void nearbyStop() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    nearby.stop();
+                }
+            });
+        }
+
+        /** "bluetooth", "location" or "app". */
+        @JavascriptInterface
+        public void openSettings(final String which) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    nearby.openSettings(which);
+                }
+            });
         }
 
         @JavascriptInterface

@@ -1078,3 +1078,207 @@
 .install-hint .inline-ic {
   vertical-align: -2px;
 }
+
+/* Friends: nearby over Bluetooth, the friends list and invites (pages/People.tsx). */
+.people-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nearby {
+  display: grid;
+  gap: 10px;
+}
+.nearby .muted.small {
+  font-size: 0.85rem;
+}
+.nearby-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-l);
+  background: var(--surface-3);
+}
+.nearby-status.live {
+  background: var(--accent-soft);
+}
+.nearby-status .ns-body {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.nearby-status .ns-body span {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.radar {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.radar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: radar 1.6s ease-out infinite;
+}
+@keyframes radar {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .radar::after {
+    animation: none;
+  }
+}
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-row .btn {
+  flex: 1;
+}
+.people-block {
+  display: grid;
+  gap: 8px;
+}
+.people-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+}
+.clock-pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.clock-pick select {
+  width: auto;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text);
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+}
+.people-list {
+  display: grid;
+  gap: 6px;
+}
+.person-row,
+.people-note,
+.my-code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-l);
+  background: var(--surface-3);
+}
+.person-row .pr-body,
+.people-note .pn-body,
+.my-code .mc-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.person-row .pr-body b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.person-row .pr-body span,
+.people-note .pn-body span,
+.my-code .mc-body span {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+.person-row .btn.small {
+  gap: 6px;
+}
+.people-note {
+  background: var(--accent-soft);
+}
+.people-note.ok {
+  display: block;
+  color: var(--text-dim);
+}
+.my-code .mc-body b {
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.add-code summary {
+  cursor: pointer;
+  color: var(--text-dim);
+  font-weight: 700;
+  padding: 4px 0;
+}
+.add-code[open] {
+  display: grid;
+  gap: 10px;
+}
+
+/* An invite (or "added you") popping up over whatever screen is open. */
+.invite-pop {
+  position: fixed;
+  z-index: 60;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 20px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: invite-in 0.25s ease-out;
+}
+@keyframes invite-in {
+  from {
+    transform: translate(-50%, -24px);
+    opacity: 0;
+  }
+}
+.invite-pop .ip-body {
+  flex: 1;
+  min-width: 160px;
+  display: grid;
+  gap: 2px;
+}
+.invite-pop .ip-body b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.invite-pop .ip-body span {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.invite-pop .ip-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}

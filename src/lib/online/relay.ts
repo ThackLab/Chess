@@ -1,7 +1,9 @@
 // The relay for live games: free public MQTT brokers, several at once so a
 // game keeps going if one is down. Each game has a short code; the topic is a
 // hash of it and every message is encrypted with a key made from it, so the
-// brokers (and anyone listening on them) see only noise.
+// brokers (and anyone listening on them) see only noise. Each player who uses
+// friends also has an inbox the same way, named after their friend code, for
+// invites.
 import { MqttClient } from './mqtt';
 
 const BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081'];
@@ -90,7 +92,9 @@ async function open(key: CryptoKey, payload: Uint8Array): Promise<unknown> {
   }
 }
 
-type Listener = (kind: 'state' | 'beat', data: unknown, from?: string) => void;
+type Listener = (kind: 'state' | 'beat' | 'inbox', data: unknown, from?: string) => void;
+
+const inboxCode = (friendCode: string) => `inbox:${friendCode}`;
 
 class Relay {
   private clients: MqttClient[] = [];
@@ -138,7 +142,7 @@ class Relay {
   }
 
   private async dispatch(topic: string, payload: Uint8Array) {
-    const m = /^(grandmasters\/v1\/[0-9a-f]+)\/(s|b)(?:\/(\w))?$/.exec(topic);
+    const m = /^(grandmasters\/v1\/[0-9a-f]+)\/(s|b|i)(?:\/(\w))?$/.exec(topic);
     if (!m) return;
     const base = m[1];
     const key = this.keys.get(base);
@@ -146,11 +150,10 @@ class Relay {
     if (!key || !ls?.size || !payload.length) return;
     const data = await open(key, payload);
     if (data === null) return;
-    ls.forEach((l) => l(m[2] === 's' ? 'state' : 'beat', data, m[3]));
+    ls.forEach((l) => l(m[2] === 's' ? 'state' : m[2] === 'b' ? 'beat' : 'inbox', data, m[3]));
   }
 
-  /** Listens to a game's state and heartbeats. */
-  async join(code: string, listener: Listener): Promise<() => void> {
+  private async listen(code: string, subtopics: string[], listener: Listener): Promise<() => void> {
     this.start();
     const { topic, key } = await channel(code);
     this.keys.set(topic, key);
@@ -158,34 +161,62 @@ class Relay {
     if (!set) {
       set = new Set();
       this.listeners.set(topic, set);
-      for (const c of this.clients) {
-        c.subscribe(`${topic}/s`);
-        c.subscribe(`${topic}/b/+`);
-      }
+      for (const c of this.clients) for (const sub of subtopics) c.subscribe(`${topic}/${sub}`);
     }
     set.add(listener);
     return () => {
       set!.delete(listener);
       if (set!.size) return;
       this.listeners.delete(topic);
-      for (const c of this.clients) {
-        c.unsubscribe(`${topic}/s`);
-        c.unsubscribe(`${topic}/b/+`);
-      }
+      for (const c of this.clients) for (const sub of subtopics) c.unsubscribe(`${topic}/${sub}`);
     };
+  }
+
+  /** Listens to a game's state and heartbeats. */
+  join(code: string, listener: Listener): Promise<() => void> {
+    return this.listen(code, ['s', 'b/+'], listener);
+  }
+
+  /** Listens to this player's inbox. */
+  inbox(friendCode: string, listener: Listener): Promise<() => void> {
+    return this.listen(inboxCode(friendCode), ['i'], listener);
+  }
+
+  /** Publishes retained on every broker, and again on any that's down when it comes back. */
+  private publishRetained(topic: string, p: Uint8Array) {
+    for (const c of this.clients) {
+      const missed = this.pending.get(c) ?? new Map<string, Uint8Array>();
+      this.pending.set(c, missed);
+      if (c.publish(topic, p, true)) missed.delete(topic);
+      else missed.set(topic, p);
+    }
   }
 
   /** Publishes the game's state, retained, so whoever connects later gets it straight away. */
   async publishState(code: string, state: unknown) {
     this.start();
     const { topic, key } = await channel(code);
-    const p = await seal(key, state);
-    for (const c of this.clients) {
-      const missed = this.pending.get(c) ?? new Map<string, Uint8Array>();
-      this.pending.set(c, missed);
-      if (c.publish(`${topic}/s`, p, true)) missed.delete(`${topic}/s`);
-      else missed.set(`${topic}/s`, p);
-    }
+    this.publishRetained(`${topic}/s`, await seal(key, state));
+  }
+
+  /**
+   * Drops a message in a player's inbox. A retained one waits there for them
+   * (only the latest is kept), so an invite reaches a friend who opens the app
+   * a little later.
+   */
+  async send(friendCode: string, data: unknown, retain: boolean) {
+    this.start();
+    const { topic, key } = await channel(inboxCode(friendCode));
+    const p = await seal(key, data);
+    if (retain) this.publishRetained(`${topic}/i`, p);
+    else for (const c of this.clients) c.publish(`${topic}/i`, p, false);
+  }
+
+  /** Empties a player's inbox (an empty retained message removes the kept one). */
+  async clearInbox(friendCode: string) {
+    this.start();
+    const { topic } = await channel(inboxCode(friendCode));
+    this.publishRetained(`${topic}/i`, new Uint8Array(0));
   }
 
   /** "I'm here": sent every few seconds while a game is open. */
