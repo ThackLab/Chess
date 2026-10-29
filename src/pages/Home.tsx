@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Bot, Check, ChevronRight, GraduationCap, Plus, Puzzle, Star, Sun, Timer, Zap } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Bot, Check, ChevronRight, GraduationCap, Plus, Puzzle, Share, Star, Sun, Timer, X, Zap } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { navigate } from '../lib/router';
 import { findBot, monogram } from '../lib/bots/bots';
@@ -18,6 +18,9 @@ import { useRepertoire } from '../state/repertoire';
 import { loadSetup, setupBot } from '../state/playSetup';
 import { useGames, userOutcome } from './Games';
 import { useOpponents, type Opponent } from '../state/opponents';
+import { ANDROID_URL } from '../state/friend';
+import { isAndroidBrowser, isInstalled, isIOS } from '../lib/platform';
+import { Logo } from '../components/Widgets';
 
 /** A position for the puzzle card's picture. */
 const HERO_FEN = 'r1b1k2r/ppppqppp/2n2n2/2b1p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 6 5';
@@ -55,6 +58,55 @@ function Section({ title, count, href, children }: { title: string; count?: numb
   );
 }
 
+const HINT_KEY = 'grandmasters.installHint';
+
+/** In a phone's browser: how to keep the app on the home screen (iPhone), or where to get the Android app. */
+function InstallHint() {
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(HINT_KEY) === 'hidden';
+    } catch {
+      return false;
+    }
+  });
+  const kind = isInstalled() ? null : isIOS ? 'ios' : isAndroidBrowser ? 'android' : null;
+  if (hidden || !kind) return null;
+  const hide = () => {
+    try {
+      localStorage.setItem(HINT_KEY, 'hidden');
+    } catch {
+      // Private browsing: it just comes back next time.
+    }
+    setHidden(true);
+  };
+  return (
+    <div className="dash-resume install-hint">
+      <Logo size={36} />
+      {kind === 'ios' ? (
+        <span className="dr-body">
+          <b>Put Grandmasters on your home screen</b>
+          <span>
+            In Safari, tap Share <Share size={14} className="inline-ic" /> then <b>Add to Home Screen</b>. It opens full screen and works offline.
+          </span>
+        </span>
+      ) : (
+        <>
+          <span className="dr-body">
+            <b>Get the Android app</b>
+            <span>Free on GitHub, built from the public code.</span>
+          </span>
+          <a className="btn primary small" href={ANDROID_URL} target="_blank" rel="noreferrer">
+            Get it
+          </a>
+        </>
+      )}
+      <button className="icon-btn" onClick={hide} aria-label="Hide this">
+        <X size={18} />
+      </button>
+    </div>
+  );
+}
+
 export function HomePage() {
   const profile = useProfile();
   const learn = useLearn();
@@ -69,6 +121,7 @@ export function HomePage() {
 
   return (
     <div className="page narrow dash">
+      <InstallHint />
       {live?.status === 'playing' && (
         <button className="dash-resume" onClick={() => navigate('/game')}>
           <span className="avatar">{monogram(findBot(live.botId)?.name ?? 'Bot')}</span>

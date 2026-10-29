@@ -34,7 +34,7 @@ export const inviteLink = (code: string) => `${baseUrl()}#/online/${code}`;
 /** Sends the invite through the phone's share sheet, or copies it. */
 export async function shareInvite(code: string, tc: Clock | null) {
   const url = inviteLink(code);
-  const text = `Play me at chess on Grandmasters (${tcLabel(tc)})! Open the link, or in the app tap Play a friend → Join with code ${formatCode(code)}. Android app: ${ANDROID_URL}`;
+  const text = `Play me at chess on Grandmasters (${tcLabel(tc)})! Open the link, or in the app tap Play a friend → Join with code ${formatCode(code)}. Android app: ${ANDROID_URL} (on iPhone, open the link in Safari)`;
   if (typeof navigator.share === 'function') {
     try {
       await navigator.share({ title: 'Grandmasters', text, url });

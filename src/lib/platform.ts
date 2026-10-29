@@ -27,6 +27,18 @@ export function vibrate(pattern: number[]) {
 
 export const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
+/** An iPhone or iPad (iPadOS says it's a Mac, but Macs have no touch screen). */
+export const isIOS =
+  typeof navigator !== 'undefined' &&
+  (/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+
+/** An Android phone's browser, rather than the Android app. */
+export const isAndroidBrowser = !isAndroidApp && typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent);
+
+/** Opened from a home-screen icon (or the Android app) rather than a browser tab. */
+export const isInstalled = () =>
+  isAndroidApp || window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+
 /** Saves text as a file. Returns a short description of where it was saved, if known. */
 export function saveTextFile(name: string, mime: string, text: string): string | null {
   if (bridge) {

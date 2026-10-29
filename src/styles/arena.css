@@ -1064,3 +1064,17 @@
     padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* "Add to Home Screen" / "Get the Android app" on Home, in a phone's browser. */
+.install-hint {
+  cursor: default;
+}
+.install-hint .dr-body b {
+  font-weight: 700;
+}
+.install-hint .dr-body span b {
+  color: var(--text);
+}
+.install-hint .inline-ic {
+  vertical-align: -2px;
+}
