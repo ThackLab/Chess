@@ -41,8 +41,8 @@ A free, private, chess.com-style app that runs entirely in your browser:
 
 ## Get it
 
-- **Android:** download [grandmasters.apk](https://thacklab.github.io/chess/grandmasters.apk), open it and allow installing from that app when Android asks. Android warns about any app that isn't from the Play Store; that's expected.
-- **iPhone, iPad or a computer:** open https://thacklab.github.io/chess/ (on iPhone, in Safari: **Share → Add to Home Screen**).
+- **Android:** download [grandmasters.apk](https://thacklab.github.io/Chess/grandmasters.apk), open it and allow installing from that app when Android asks. Android warns about any app that isn't from the Play Store; that's expected.
+- **iPhone, iPad or a computer:** open https://thacklab.github.io/Chess/ (on iPhone, in Safari: **Share → Add to Home Screen**).
 
 ## Privacy and safety
 
@@ -55,7 +55,7 @@ Everything the app is made of is in this repository, and both the website and th
   - *Importing games:* your chess.com or lichess username goes to `api.chess.com` or `lichess.org` to fetch your public games.
   - *AI coach:* off by default; with your own Anthropic API key it sends the game you ask about to Anthropic. The key stays on your device.
   - *The app itself:* loading the website fetches it from GitHub Pages. The Android app needs no download at all to run.
-- **Checking the APK:** the build writes the APK's SHA-256 fingerprint next to it ([grandmasters.apk.sha256](https://thacklab.github.io/chess/grandmasters.apk.sha256)) and into the build log. Compare it with the file you were sent (`sha256sum grandmasters.apk`, or any SHA-256 app), or build the APK yourself from this code (below). The APK is signed with uber-apk-signer's public debug key, so the signature alone doesn't say who built it; the fingerprint does.
+- **Checking the APK:** the build writes the APK's SHA-256 fingerprint next to it ([grandmasters.apk.sha256](https://thacklab.github.io/Chess/grandmasters.apk.sha256)) and into the build log. Compare it with the file you were sent (`sha256sum grandmasters.apk`, or any SHA-256 app), or build the APK yourself from this code (below). The APK is signed with uber-apk-signer's public debug key, so the signature alone doesn't say who built it; the fingerprint does.
 
 Games by link travel in the links themselves.
 
@@ -64,7 +64,7 @@ Games by link travel in the links themselves.
 ## Run it
 
 ```bash
-git clone https://github.com/ThackLab/chess
+git clone https://github.com/ThackLab/Chess
 cd chess
 npm install
 npm run dev        # http://localhost:5173
@@ -89,7 +89,7 @@ By default the APK is signed with a public debug key, which is fine for your own
 
 ### iPhone and iPad
 
-There is no App Store build: on iOS the app runs as a web app. Open the deployed site (see below; for this repo https://thacklab.github.io/chess/) in **Safari**, tap **Share → Add to Home Screen**, and open it from the new icon. It then runs full screen and works offline. Games, reviews and puzzle progress are kept on the device; iOS keeps a home-screen app's storage, but may clear a site's storage that is only used in a Safari tab and not opened for a few weeks.
+There is no App Store build: on iOS the app runs as a web app. Open the deployed site (see below; for this repo https://thacklab.github.io/Chess/) in **Safari**, tap **Share → Add to Home Screen**, and open it from the new icon. It then runs full screen and works offline. Games, reviews and puzzle progress are kept on the device; iOS keeps a home-screen app's storage, but may clear a site's storage that is only used in a Safari tab and not opened for a few weeks.
 
 ### Deploy to GitHub Pages
 
