@@ -40,176 +40,173 @@
   --num-weight: 800;
 }
 
-/* ---------------------------------------------------------------- controls, Club only */
+/* ---------------------------------------------------------------- controls: the chunky style (Club and the scene themes) */
 
-[data-theme='club'] body {
+[data-ui='chunky'] body {
   font-weight: 500;
 }
-[data-theme='club'] h1,
-[data-theme='club'] h2,
-[data-theme='club'] h3,
-[data-theme='club'] .page-head h1 {
+[data-ui='chunky'] h1,
+[data-ui='chunky'] h2,
+[data-ui='chunky'] h3,
+[data-ui='chunky'] .page-head h1 {
   font-weight: 800;
   letter-spacing: -0.01em;
 }
-[data-theme='club'] .btn {
+[data-ui='chunky'] .btn {
   background: var(--surface-3);
   border: 0;
   border-radius: var(--radius);
   box-shadow: 0 4px 0 0 var(--lip-grey);
-  color: #fff;
+  color: var(--btn-text, #fff);
   font-weight: 700;
   transition:
     background 0.12s,
     transform 0.06s,
     box-shadow 0.06s;
 }
-[data-theme='club'] .btn:hover {
-  background: #57544f;
+[data-ui='chunky'] .btn:hover {
+  background: var(--btn-hover, #57544f);
 }
-[data-theme='club'] .btn:active {
+[data-ui='chunky'] .btn:active {
   opacity: 1;
   transform: translateY(2px);
   box-shadow: 0 2px 0 0 var(--lip-grey);
 }
-[data-theme='club'] .btn.primary,
-[data-theme='club'] .btn.gold {
+[data-ui='chunky'] .btn.primary,
+[data-ui='chunky'] .btn.gold {
   background: var(--accent);
   box-shadow: 0 4px 0 0 var(--lip);
-  color: #fff;
+  color: var(--accent-text, #fff);
   font-weight: 800;
   text-shadow: 0 1px 0 #0000002e;
 }
-[data-theme='club'] .btn.primary:hover {
+[data-ui='chunky'] .btn.primary:hover {
   background: var(--accent-strong);
 }
-[data-theme='club'] .btn.primary:active {
+[data-ui='chunky'] .btn.primary:active {
   box-shadow: 0 2px 0 0 var(--lip);
 }
-[data-theme='club'] .btn.ghost {
+[data-ui='chunky'] .btn.ghost {
   background: transparent;
   box-shadow: none;
   color: var(--text-dim);
 }
-[data-theme='club'] .btn.small {
+[data-ui='chunky'] .btn.small {
   box-shadow: 0 3px 0 0 var(--lip-grey);
 }
-[data-theme='club'] .btn.primary.small {
+[data-ui='chunky'] .btn.primary.small {
   box-shadow: 0 3px 0 0 var(--lip);
 }
-[data-theme='club'] .btn.danger {
+[data-ui='chunky'] .btn.danger {
   color: #fff;
   background: #b23330;
   box-shadow: 0 4px 0 0 #7a1f1d;
 }
-[data-theme='club'] .btn:disabled {
+[data-ui='chunky'] .btn:disabled {
   opacity: 0.45;
 }
-[data-theme='club'] .segmented {
+[data-ui='chunky'] .segmented {
   background: var(--surface);
   border: 0;
   padding: 4px;
   gap: 4px;
 }
-[data-theme='club'] .segmented button {
+[data-ui='chunky'] .segmented button {
   color: var(--text-dim);
   font-weight: 700;
   border-radius: 6px;
 }
-[data-theme='club'] .segmented button.on {
+[data-ui='chunky'] .segmented button.on {
   background: var(--surface-3);
-  color: #fff;
+  color: var(--text);
   box-shadow: inset 0 0 0 2px var(--accent);
 }
-[data-theme='club'] input,
-[data-theme='club'] select,
-[data-theme='club'] textarea {
+[data-ui='chunky'] input,
+[data-ui='chunky'] select,
+[data-ui='chunky'] textarea {
   background: var(--surface);
   border-color: var(--surface-3);
   font-weight: 600;
 }
-[data-theme='club'] .pill {
+[data-ui='chunky'] .pill {
   background: var(--surface-3);
   border: 0;
-  color: #fff;
+  color: var(--text);
   font-weight: 700;
 }
-[data-theme='club'] .pill.accent {
+[data-ui='chunky'] .pill.accent {
   background: var(--accent);
 }
-[data-theme='club'] .avatar {
+[data-ui='chunky'] .avatar {
   background: var(--surface-3) !important;
   border: 0;
   border-radius: 6px;
   font-weight: 800;
 }
-[data-theme='club'] .card,
-[data-theme='club'] .friend-card,
-[data-theme='club'] .coach-card {
+[data-ui='chunky'] .card,
+[data-ui='chunky'] .friend-card,
+[data-ui='chunky'] .coach-card {
   background: var(--surface-2);
   border: 0;
   border-radius: var(--radius-l);
 }
-[data-theme='club'] .section-title {
+[data-ui='chunky'] .section-title {
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: none;
   color: var(--text);
 }
-[data-theme='club'] .section-title a,
-[data-theme='club'] .section-title button {
+[data-ui='chunky'] .section-title a,
+[data-ui='chunky'] .section-title button {
   font-weight: 700;
   color: var(--text-dim);
 }
-[data-theme='club'] .list {
+[data-ui='chunky'] .list {
   border-top: 0;
 }
-[data-theme='club'] .list-row {
-  border-bottom-color: #3c3a37;
+[data-ui='chunky'] .list-row {
+  border-bottom-color: var(--line);
 }
-[data-theme='club'] .list-row .lr-title {
+[data-ui='chunky'] .list-row .lr-title {
   font-weight: 700;
 }
-[data-theme='club'] .clock {
-  background: #262421;
+[data-ui='chunky'] .clock {
+  background: var(--clock-bg, #262421);
   border: 0;
-  color: #8b8987;
+  color: var(--clock-text, #8b8987);
   font-family: var(--font-body);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-[data-theme='club'] .clock.active {
-  background: #fff;
-  color: #262421;
+[data-ui='chunky'] .clock.active,
+[data-ui='chunky'] .clock.dark.active {
+  background: var(--clock-on-bg, #fff);
+  color: var(--clock-on-text, #262421);
 }
-[data-theme='club'] .clock.dark.active {
-  background: #fff;
-  color: #262421;
-}
-[data-theme='club'] .clock.low {
+[data-ui='chunky'] .clock.low {
   background: #c33;
   color: #fff;
 }
-[data-theme='club'] .player-bar b {
+[data-ui='chunky'] .player-bar b {
   font-weight: 800;
 }
-[data-theme='club'] .toggle input:checked {
+[data-ui='chunky'] .toggle input:checked {
   background: var(--accent);
   border-color: var(--accent);
 }
 @media (max-width: 900px) {
-  [data-theme='club'] .tabbar {
+  [data-ui='chunky'] .tabbar {
     background: var(--surface);
     border-top: 0;
   }
-  [data-theme='club'] .tab {
+  [data-ui='chunky'] .tab {
     font-weight: 700;
     font-size: 0.72rem;
-    color: #989795;
+    color: var(--text-faint);
   }
-  [data-theme='club'] .tab.active {
-    color: #fff;
+  [data-ui='chunky'] .tab.active {
+    color: var(--text);
   }
 }
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { BoardId, PieceSetId, ThemeId } from '../lib/appearance';
+import { currentThemeId, type BoardId, type PieceSetId, type ThemeId } from '../lib/appearance';
 
 /** A board colour, or 'auto' for the one that comes with the theme. */
 export type BoardTheme = BoardId | 'auto';
@@ -84,7 +84,13 @@ export const useSettings = create<Settings>()(
     }),
     {
       name: 'grandmasters.settings',
-      version: 1,
+      version: 2,
+      // 1.6 replaced six themes: move anyone on one to its replacement.
+      migrate: (state) => {
+        const s = state as Settings;
+        if (s?.theme) s.theme = currentThemeId(s.theme);
+        return s;
+      },
     },
   ),
 );

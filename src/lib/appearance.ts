@@ -16,12 +16,34 @@ import atkinsonItalicUrl from '@fontsource-variable/atkinson-hyperlegible-next/f
 export type FontId = 'inter' | 'serif' | 'fraunces' | 'newsreader' | 'mono' | 'atkinson';
 
 export type BoardId =
-  'mono' | 'green' | 'brown' | 'blue' | 'purple' | 'grey' | 'ice' | 'slate' | 'paper' | 'ocean' | 'royal' | 'rose' | 'contrast' | 'clear';
+  | 'mono'
+  | 'green'
+  | 'brown'
+  | 'blue'
+  | 'purple'
+  | 'grey'
+  | 'ice'
+  | 'slate'
+  | 'paper'
+  | 'ocean'
+  | 'royal'
+  | 'rose'
+  | 'contrast'
+  | 'clear'
+  | 'gothic'
+  | 'blossom'
+  | 'onyx'
+  | 'aurora'
+  | 'neon'
+  | 'sea'
+  | 'moss'
+  | 'dune';
 
 export type PieceSetId =
   'cburnett' | 'merida' | 'chessnut' | 'spatial' | 'celtic' | 'fantasy' | 'papercut' | 'rhosgfx' | 'kiwen-suwi' | 'totoy' | 'mpchess' | 'firi';
 
-export type ThemeId = 'hearth' | 'noir' | 'graphite' | 'club' | 'walnut' | 'paper' | 'ocean' | 'royal' | 'rose' | 'contrast' | 'clear';
+export type ThemeId =
+  'club' | 'gothic' | 'blossom' | 'noir' | 'aurora' | 'synthwave' | 'deepsea' | 'forest' | 'desert' | 'paper' | 'contrast' | 'clear';
 
 /** How headlines are set: an editorial serif, tight heavy sans, or plain sans. */
 export type DisplayStyle = 'serif' | 'tight' | 'plain';
@@ -36,10 +58,23 @@ export interface Theme {
   pieces: PieceSetId;
   /** Light themes get light browser chrome and form controls. */
   light?: boolean;
+  /** Chunky chess.com-style controls (buttons with a lip, bold type), or the plain ones. */
+  ui: 'chunky' | 'classic';
+  /** A picture behind everything, with the app's cards over it like frosted glass (src/styles/scenes.css). */
+  scene?: boolean;
   /** Shown in the theme list: background, text and accent. */
   swatch: [string, string, string];
-  group: 'Classic' | 'Warm' | 'Dark' | 'Colour' | 'Light' | 'Accessible';
+  group: 'Scenes' | 'Classic' | 'Accessible';
 }
+
+const scene = (t: Omit<Theme, 'ui' | 'scene' | 'display' | 'fonts' | 'group'>): Theme => ({
+  ...t,
+  ui: 'chunky',
+  scene: true,
+  display: 'plain',
+  fonts: [],
+  group: 'Scenes',
+});
 
 export const THEMES: Theme[] = [
   {
@@ -50,85 +85,78 @@ export const THEMES: Theme[] = [
     fonts: [],
     board: 'green',
     pieces: 'merida',
+    ui: 'chunky',
     swatch: ['#302e2b', '#ffffff', '#81b64c'],
     group: 'Classic',
   },
-  {
-    id: 'hearth',
-    name: 'Hearth',
-    blurb: 'Warm espresso and amber, a wooden board, soft serif headlines.',
-    display: 'serif',
-    fonts: ['fraunces'],
-    board: 'brown',
+  scene({
+    id: 'gothic',
+    name: 'Gothic Night',
+    blurb: 'A full moon over cathedral spires, stars and bats. Violet and silver.',
+    board: 'gothic',
+    pieces: 'fantasy',
+    swatch: ['#120c26', '#f4efff', '#9d6bff'],
+  }),
+  scene({
+    id: 'blossom',
+    name: 'Blossom',
+    blurb: 'Candy pink, cherry blossom and little hearts. Sweet and bold.',
+    board: 'blossom',
+    pieces: 'papercut',
+    light: true,
+    swatch: ['#ffd9e8', '#3d1230', '#ff4f9a'],
+  }),
+  scene({
+    id: 'aurora',
+    name: 'Aurora',
+    blurb: 'The northern lights over snowy peaks.',
+    board: 'aurora',
+    pieces: 'chessnut',
+    swatch: ['#04121a', '#eafff6', '#2fd18b'],
+  }),
+  scene({
+    id: 'synthwave',
+    name: 'Synthwave',
+    blurb: 'A neon sunset over a retro grid.',
+    board: 'neon',
+    pieces: 'spatial',
+    swatch: ['#160028', '#fdeaff', '#ff3d9a'],
+  }),
+  scene({
+    id: 'deepsea',
+    name: 'Deep Sea',
+    blurb: 'Sunlight through the water, fish and rising bubbles.',
+    board: 'sea',
     pieces: 'cburnett',
-    swatch: ['#1b1410', '#f7ecdf', '#f2a65e'],
-    group: 'Warm',
-  },
+    swatch: ['#03182b', '#e6f6ff', '#23b5f0'],
+  }),
+  scene({
+    id: 'forest',
+    name: 'Enchanted Forest',
+    blurb: 'Moonlit pines and fireflies.',
+    board: 'moss',
+    pieces: 'celtic',
+    swatch: ['#081a10', '#effbe6', '#7cc142'],
+  }),
+  scene({
+    id: 'desert',
+    name: 'Desert Dusk',
+    blurb: 'Sunset over the dunes, a caravan on the horizon.',
+    board: 'dune',
+    pieces: 'rhosgfx',
+    swatch: ['#2a1230', '#fff1e0', '#ff9d3c'],
+  }),
   {
     id: 'noir',
     name: 'Noir',
-    blurb: 'Pure black with editorial serif headlines.',
+    blurb: 'Minimal black. No colour, no clutter, editorial headlines.',
     display: 'serif',
     fonts: ['serif'],
-    board: 'mono',
+    board: 'onyx',
     pieces: 'cburnett',
+    ui: 'classic',
     swatch: ['#000000', '#f5f5f5', '#ffffff'],
-    group: 'Dark',
-  },
-  {
-    id: 'graphite',
-    name: 'Graphite',
-    blurb: 'Tight, heavy type with a silver sheen.',
-    display: 'tight',
-    fonts: [],
-    board: 'slate',
-    pieces: 'chessnut',
-    swatch: ['#0b0b0c', '#f2f2f3', '#c9c9cf'],
-    group: 'Dark',
-  },
-  {
-    id: 'walnut',
-    name: 'Walnut',
-    blurb: 'Warm wood, cream and amber.',
-    display: 'serif',
-    fonts: ['fraunces'],
-    board: 'brown',
-    pieces: 'celtic',
-    swatch: ['#17110d', '#f4e9da', '#e0a95c'],
-    group: 'Colour',
-  },
-  {
-    id: 'ocean',
-    name: 'Ocean',
-    blurb: 'Deep navy with an ice-blue board.',
-    display: 'tight',
-    fonts: [],
-    board: 'ocean',
-    pieces: 'spatial',
-    swatch: ['#07101c', '#eaf2ff', '#4cc9f0'],
-    group: 'Colour',
-  },
-  {
-    id: 'royal',
-    name: 'Royal',
-    blurb: 'Midnight purple and gold.',
-    display: 'serif',
-    fonts: ['serif'],
-    board: 'royal',
-    pieces: 'fantasy',
-    swatch: ['#0f0a17', '#f3eefb', '#e7c27d'],
-    group: 'Colour',
-  },
-  {
-    id: 'rose',
-    name: 'Rose',
-    blurb: 'Dusk pink, soft and bold.',
-    display: 'serif',
-    fonts: ['fraunces'],
-    board: 'rose',
-    pieces: 'papercut',
-    swatch: ['#160d12', '#fff0f5', '#ff8fab'],
-    group: 'Colour',
+    group: 'Classic',
   },
   {
     id: 'paper',
@@ -139,8 +167,9 @@ export const THEMES: Theme[] = [
     board: 'paper',
     pieces: 'mpchess',
     light: true,
+    ui: 'classic',
     swatch: ['#f5f0e6', '#1c1a17', '#1c1a17'],
-    group: 'Light',
+    group: 'Classic',
   },
   {
     id: 'contrast',
@@ -150,6 +179,7 @@ export const THEMES: Theme[] = [
     fonts: [],
     board: 'contrast',
     pieces: 'cburnett',
+    ui: 'classic',
     swatch: ['#000000', '#ffffff', '#ffd60a'],
     group: 'Accessible',
   },
@@ -161,17 +191,29 @@ export const THEMES: Theme[] = [
     fonts: ['atkinson'],
     board: 'clear',
     pieces: 'kiwen-suwi',
+    ui: 'classic',
     swatch: ['#101418', '#f5f7fa', '#ffcc00'],
     group: 'Accessible',
   },
 ];
 
+/** Themes from before 1.6, and the one that replaced each. */
+const RENAMED: Record<string, ThemeId> = { hearth: 'desert', graphite: 'noir', walnut: 'club', ocean: 'deepsea', royal: 'gothic', rose: 'blossom' };
+
 export const BOARDS: { id: BoardId; name: string; light: string; dark: string }[] = [
-  { id: 'mono', name: 'Mono', light: '#e6e6e6', dark: '#9e9e9e' },
-  { id: 'slate', name: 'Slate', light: '#dfe3e8', dark: '#8b95a1' },
   { id: 'green', name: 'Green', light: '#eeeed2', dark: '#769656' },
   { id: 'brown', name: 'Wood', light: '#f0d9b5', dark: '#b58863' },
   { id: 'blue', name: 'Blue', light: '#eae9d2', dark: '#4b7399' },
+  { id: 'gothic', name: 'Gothic', light: '#cdc4e0', dark: '#6b5a8e' },
+  { id: 'blossom', name: 'Blossom', light: '#fff0f6', dark: '#f39ac1' },
+  { id: 'onyx', name: 'Onyx', light: '#d9d9d9', dark: '#2e2e2e' },
+  { id: 'aurora', name: 'Aurora', light: '#d6efe6', dark: '#3d8a80' },
+  { id: 'neon', name: 'Neon', light: '#f3d9ff', dark: '#9150d6' },
+  { id: 'sea', name: 'Sea', light: '#d4ecf7', dark: '#2f77a3' },
+  { id: 'moss', name: 'Moss', light: '#e6ebd0', dark: '#5f8048' },
+  { id: 'dune', name: 'Dune', light: '#f6e2c0', dark: '#c48451' },
+  { id: 'mono', name: 'Mono', light: '#e6e6e6', dark: '#9e9e9e' },
+  { id: 'slate', name: 'Slate', light: '#dfe3e8', dark: '#8b95a1' },
   { id: 'ocean', name: 'Ice', light: '#e3eef6', dark: '#7096b8' },
   { id: 'ice', name: 'Sky', light: '#dbe9f4', dark: '#7ca6c4' },
   { id: 'purple', name: 'Purple', light: '#efefef', dark: '#8877b7' },
@@ -198,7 +240,10 @@ export const PIECE_SETS: { id: PieceSetId; name: string; credit: string }[] = [
   { id: 'mpchess', name: 'Print', credit: 'Maxime Chupin, GPLv3+' },
 ];
 
-export const themeOf = (id: string): Theme => THEMES.find((t) => t.id === id) ?? THEMES[0];
+export const themeOf = (id: string): Theme => THEMES.find((t) => t.id === (RENAMED[id] ?? id)) ?? THEMES[0];
+
+/** A theme id that exists now (themes from before 1.6 map to their replacements). */
+export const currentThemeId = (id: string): ThemeId => themeOf(id).id;
 
 const FONT_FILES: Record<FontId, { family: string; normal: string; italic?: string; weight: string }> = {
   inter: { family: 'Inter', normal: interUrl, weight: '100 900' },
@@ -274,6 +319,8 @@ export function applyAppearance(s: AppearanceSettings) {
   const root = document.documentElement;
   root.dataset.theme = t.id;
   root.dataset.display = t.display;
+  root.dataset.ui = t.ui;
+  root.toggleAttribute('data-scene', !!t.scene);
   root.dataset.pieces = resolvePieces(s);
   root.dataset.text = s.textSize;
   root.toggleAttribute('data-colorblind', s.colorblind || t.id === 'clear');

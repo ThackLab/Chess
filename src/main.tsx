@@ -4,6 +4,7 @@ import { App } from './App';
 import './styles/app.css';
 import './styles/themes.css';
 import './styles/arena.css';
+import './styles/scenes.css';
 import { isAndroidApp } from './lib/platform';
 import { applyAppearance } from './lib/appearance';
 import { useSettings } from './state/settings';

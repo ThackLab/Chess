@@ -1,0 +1,438 @@
+/* Scene themes: a picture behind everything (src/assets/scenes, drawn by
+   scripts/scenes.py), with the app's bars, cards and menus over it like
+   frosted glass. They share the chunky controls in arena.css; each one sets
+   its colours here. */
+
+[data-scene] {
+  --radius-s: 8px;
+  --radius: 10px;
+  --radius-l: 14px;
+  --font-display: var(--font-body);
+  --display-weight: 800;
+  --display-tracking: -0.01em;
+  --num-weight: 800;
+  --glass: blur(14px) saturate(140%);
+}
+
+/* ---------------------------------------------------------------- the picture */
+
+html[data-scene],
+[data-scene] body,
+[data-scene] #root,
+[data-scene] .app {
+  background: transparent;
+}
+[data-scene] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, var(--scrim) 0%, transparent 35%, transparent 70%, var(--scrim) 100%),
+    var(--scene-color) var(--scene) center bottom / cover no-repeat;
+}
+
+/* ---------------------------------------------------------------- frosted glass */
+
+[data-scene] .appbar,
+[data-scene] .drawer,
+[data-scene] .card,
+[data-scene] .card-box,
+[data-scene] .friend-card,
+[data-scene] .coach-card,
+[data-scene] .profile-hero,
+[data-scene] .invite-pop,
+[data-scene] .fr-card,
+[data-scene] .hub-row,
+[data-scene] .tile,
+[data-scene] .today-item,
+[data-scene] .dash-resume,
+[data-scene] .notice-card,
+[data-scene] .focus-screen .play-controls {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
+}
+[data-scene] .focus-screen .play-controls {
+  background: var(--surface);
+}
+[data-scene] .appbar {
+  border-bottom-color: var(--line);
+}
+/* Text that sits right on the picture. */
+[data-scene] .page-head h1,
+[data-scene] .dash-head h2,
+[data-scene] .section-title,
+[data-scene] .profile-h {
+  text-shadow: 0 1px 12px var(--scrim);
+}
+
+/* The big cards on the home screen take the scene's colours. */
+[data-scene] .hero-card {
+  background: var(--hero, linear-gradient(135deg, rgba(74, 71, 68, 0.82), rgba(51, 49, 46, 0.82)));
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
+}
+[data-scene] .hero-card.hero-lesson {
+  background: var(--hero-lesson, linear-gradient(135deg, rgba(46, 90, 122, 0.84), rgba(35, 57, 77, 0.84)));
+}
+[data-scene] .hero-card.hero-rush {
+  background: var(--hero-rush, linear-gradient(135deg, rgba(122, 74, 38, 0.84), rgba(74, 47, 28, 0.84)));
+}
+
+/* The theme list shows each scene in its card. */
+.theme-card[data-scene] {
+  background:
+    linear-gradient(180deg, transparent 30%, var(--scrim) 100%),
+    var(--scene-color) var(--scene) center bottom / cover no-repeat;
+}
+.theme-card[data-scene] .tc-body {
+  text-shadow: 0 1px 6px var(--scrim);
+}
+
+/* ---------------------------------------------------------------- Gothic Night */
+
+[data-theme='gothic'] {
+  --scene: url('../assets/scenes/gothic.svg');
+  --hero: linear-gradient(135deg, rgba(110, 80, 190, 0.84), rgba(46, 30, 92, 0.84));
+  --scene-color: #140d38;
+  --scrim: #07051acc;
+  --bg: #120c26;
+  --bg-raise: #120c26;
+  --surface: rgba(18, 12, 38, 0.74);
+  --surface-2: rgba(38, 27, 70, 0.66);
+  --surface-3: rgba(78, 60, 128, 0.88);
+  --line: rgba(190, 170, 255, 0.14);
+  --line-strong: rgba(190, 170, 255, 0.28);
+  --line-soft: #ffffff10;
+  --text: #f4efff;
+  --text-soft: #e2d9fb;
+  --text-dim: #c3b8e2;
+  --text-faint: #958ab8;
+  --accent: #9d6bff;
+  --accent-strong: #b48cff;
+  --accent-text: #ffffff;
+  --accent-soft: #9d6bff30;
+  --sel: #9d6bff;
+  --sel-text: #fff;
+  --good: #7ee08a;
+  --good-soft: #7ee08a26;
+  --good-line: #7ee08a66;
+  --bad: #ff5f7a;
+  --bad-soft: #ff5f7a1f;
+  --bad-line: #ff5f7a66;
+  --focus: #b48cff;
+  --lip: #5e36b8;
+  --lip-grey: rgba(8, 5, 22, 0.75);
+  --btn-hover: rgba(100, 80, 158, 0.92);
+  --clock-bg: rgba(8, 5, 22, 0.75);
+  --clock-text: #a99cd0;
+  --clock-on-bg: #f4efff;
+  --clock-on-text: #1a1033;
+}
+
+/* ---------------------------------------------------------------- Blossom (light) */
+
+[data-theme='blossom'] {
+  --scene: url('../assets/scenes/blossom.svg');
+  --hero: linear-gradient(135deg, #ff7eb6, #e9549a);
+  --hero-lesson: linear-gradient(135deg, #b48cff, #8a62e6);
+  --hero-rush: linear-gradient(135deg, #ffa36b, #f2705a);
+  --scene-color: #ffd9e8;
+  --scrim: #fff2f8aa;
+  --bg: #ffe6f0;
+  --bg-raise: #ffe6f0;
+  --surface: rgba(255, 246, 250, 0.8);
+  --surface-2: rgba(255, 255, 255, 0.7);
+  --surface-3: rgba(255, 210, 230, 0.96);
+  --line: rgba(214, 51, 132, 0.14);
+  --line-strong: rgba(214, 51, 132, 0.28);
+  --line-soft: #d6338412;
+  --text: #3d1230;
+  --text-soft: #5a2148;
+  --text-dim: #8a4c74;
+  --text-faint: #b3849f;
+  --accent: #ff4f9a;
+  --accent-strong: #ff6fae;
+  --accent-text: #ffffff;
+  --accent-soft: #ff4f9a26;
+  --sel: #ff4f9a;
+  --sel-text: #fff;
+  --good: #23a35c;
+  --good-soft: #23a35c1f;
+  --good-line: #23a35c66;
+  --bad: #e0303f;
+  --bad-soft: #e0303f1a;
+  --bad-line: #e0303f66;
+  --focus: #ff4f9a;
+  --lip: #c42a72;
+  --lip-grey: #eba2c3;
+  --btn-text: #5a1f45;
+  --btn-hover: #ffc4de;
+  --clock-bg: rgba(255, 255, 255, 0.75);
+  --clock-text: #b07a9c;
+  --clock-on-bg: #ff4f9a;
+  --clock-on-text: #fff;
+}
+[data-theme='blossom'] .fc-avatar,
+[data-theme='blossom'] .h-avatar,
+[data-theme='blossom'] .pb-avatar {
+  background: #f7a8cb;
+}
+
+/* ---------------------------------------------------------------- Aurora */
+
+[data-theme='aurora'] {
+  --scene: url('../assets/scenes/aurora.svg');
+  --hero: linear-gradient(135deg, rgba(30, 110, 100, 0.84), rgba(8, 46, 54, 0.84));
+  --scene-color: #04192a;
+  --scrim: #020812cc;
+  --bg: #04121a;
+  --bg-raise: #04121a;
+  --surface: rgba(4, 20, 28, 0.74);
+  --surface-2: rgba(10, 40, 50, 0.64);
+  --surface-3: rgba(28, 78, 88, 0.88);
+  --line: rgba(120, 255, 210, 0.12);
+  --line-strong: rgba(120, 255, 210, 0.24);
+  --line-soft: #ffffff10;
+  --text: #eafff6;
+  --text-soft: #d2f2e7;
+  --text-dim: #a5cfc3;
+  --text-faint: #6f978e;
+  --accent: #23bf7d;
+  --accent-strong: #36d690;
+  --accent-text: #ffffff;
+  --accent-soft: #23bf7d2b;
+  --sel: #23bf7d;
+  --sel-text: #fff;
+  --good: #4fe3a2;
+  --good-soft: #4fe3a226;
+  --good-line: #4fe3a266;
+  --bad: #ff6b6b;
+  --bad-soft: #ff6b6b1f;
+  --bad-line: #ff6b6b66;
+  --focus: #4fe3a2;
+  --lip: #137a4e;
+  --lip-grey: rgba(2, 10, 14, 0.75);
+  --btn-hover: rgba(40, 100, 110, 0.92);
+  --clock-bg: rgba(2, 10, 14, 0.75);
+  --clock-text: #8fb8ae;
+  --clock-on-bg: #eafff6;
+  --clock-on-text: #062018;
+}
+
+/* ---------------------------------------------------------------- Synthwave */
+
+[data-theme='synthwave'] {
+  --scene: url('../assets/scenes/synthwave.svg');
+  --hero: linear-gradient(135deg, rgba(150, 40, 170, 0.84), rgba(60, 10, 90, 0.84));
+  --scene-color: #2a0a52;
+  --scrim: #0d0021cc;
+  --bg: #160028;
+  --bg-raise: #160028;
+  --surface: rgba(22, 0, 40, 0.74);
+  --surface-2: rgba(48, 10, 82, 0.64);
+  --surface-3: rgba(96, 30, 150, 0.9);
+  --line: rgba(255, 120, 230, 0.16);
+  --line-strong: rgba(255, 120, 230, 0.3);
+  --line-soft: #ffffff10;
+  --text: #fdeaff;
+  --text-soft: #f2d4fb;
+  --text-dim: #d6a9e8;
+  --text-faint: #9a6fb3;
+  --accent: #ff3d9a;
+  --accent-strong: #ff5fae;
+  --accent-text: #ffffff;
+  --accent-soft: #ff3d9a2e;
+  --sel: #ff3d9a;
+  --sel-text: #fff;
+  --good: #39f5a0;
+  --good-soft: #39f5a026;
+  --good-line: #39f5a066;
+  --bad: #ff4d4d;
+  --bad-soft: #ff4d4d1f;
+  --bad-line: #ff4d4d66;
+  --focus: #2de2e6;
+  --lip: #a8155f;
+  --lip-grey: rgba(10, 0, 22, 0.75);
+  --btn-hover: rgba(120, 44, 180, 0.94);
+  --clock-bg: rgba(10, 0, 22, 0.75);
+  --clock-text: #b88ad0;
+  --clock-on-bg: #2de2e6;
+  --clock-on-text: #12002a;
+}
+
+/* ---------------------------------------------------------------- Deep Sea */
+
+[data-theme='deepsea'] {
+  --scene: url('../assets/scenes/deepsea.svg');
+  --hero: linear-gradient(135deg, rgba(20, 110, 160, 0.84), rgba(6, 50, 86, 0.84));
+  --scene-color: #06416b;
+  --scrim: #02101fcc;
+  --bg: #03182b;
+  --bg-raise: #03182b;
+  --surface: rgba(2, 20, 38, 0.72);
+  --surface-2: rgba(6, 44, 74, 0.6);
+  --surface-3: rgba(18, 84, 126, 0.88);
+  --line: rgba(140, 220, 255, 0.14);
+  --line-strong: rgba(140, 220, 255, 0.26);
+  --line-soft: #ffffff10;
+  --text: #e6f6ff;
+  --text-soft: #cfe9f7;
+  --text-dim: #9fc6dd;
+  --text-faint: #6a93ab;
+  --accent: #159fd8;
+  --accent-strong: #2db3ea;
+  --accent-text: #ffffff;
+  --accent-soft: #159fd82e;
+  --sel: #159fd8;
+  --sel-text: #fff;
+  --good: #5fe0a0;
+  --good-soft: #5fe0a026;
+  --good-line: #5fe0a066;
+  --bad: #ff6b6b;
+  --bad-soft: #ff6b6b1f;
+  --bad-line: #ff6b6b66;
+  --focus: #4cc6f5;
+  --lip: #0a6690;
+  --lip-grey: rgba(1, 10, 20, 0.75);
+  --btn-hover: rgba(28, 104, 150, 0.92);
+  --clock-bg: rgba(1, 10, 20, 0.75);
+  --clock-text: #86afc6;
+  --clock-on-bg: #e6f6ff;
+  --clock-on-text: #03182b;
+}
+
+/* ---------------------------------------------------------------- Enchanted Forest */
+
+[data-theme='forest'] {
+  --scene: url('../assets/scenes/forest.svg');
+  --hero: linear-gradient(135deg, rgba(56, 110, 60, 0.84), rgba(16, 50, 28, 0.84));
+  --scene-color: #0c2a1d;
+  --scrim: #04100acc;
+  --bg: #081a10;
+  --bg-raise: #081a10;
+  --surface: rgba(6, 22, 13, 0.74);
+  --surface-2: rgba(16, 44, 26, 0.64);
+  --surface-3: rgba(40, 82, 48, 0.9);
+  --line: rgba(190, 255, 150, 0.12);
+  --line-strong: rgba(190, 255, 150, 0.24);
+  --line-soft: #ffffff10;
+  --text: #effbe6;
+  --text-soft: #dcefd0;
+  --text-dim: #b4d2a8;
+  --text-faint: #7d9c72;
+  --accent: #6fb53a;
+  --accent-strong: #82c94a;
+  --accent-text: #ffffff;
+  --accent-soft: #6fb53a2e;
+  --sel: #6fb53a;
+  --sel-text: #fff;
+  --good: #9be15d;
+  --good-soft: #9be15d26;
+  --good-line: #9be15d66;
+  --bad: #ff6b5b;
+  --bad-soft: #ff6b5b1f;
+  --bad-line: #ff6b5b66;
+  --focus: #b8ff4a;
+  --lip: #3f7420;
+  --lip-grey: rgba(3, 12, 7, 0.75);
+  --btn-hover: rgba(52, 100, 60, 0.92);
+  --clock-bg: rgba(3, 12, 7, 0.75);
+  --clock-text: #93b386;
+  --clock-on-bg: #effbe6;
+  --clock-on-text: #081a10;
+}
+
+/* ---------------------------------------------------------------- Desert Dusk */
+
+[data-theme='desert'] {
+  --scene: url('../assets/scenes/desert.svg');
+  --hero: linear-gradient(135deg, rgba(170, 80, 80, 0.84), rgba(80, 30, 60, 0.84));
+  --scene-color: #4a1c4e;
+  --scrim: #1e0d2ecc;
+  --bg: #2a1230;
+  --bg-raise: #2a1230;
+  --surface: rgba(34, 14, 38, 0.74);
+  --surface-2: rgba(70, 28, 60, 0.62);
+  --surface-3: rgba(124, 58, 74, 0.9);
+  --line: rgba(255, 190, 140, 0.14);
+  --line-strong: rgba(255, 190, 140, 0.28);
+  --line-soft: #ffffff10;
+  --text: #fff1e0;
+  --text-soft: #f8dfc8;
+  --text-dim: #e8c3a8;
+  --text-faint: #b08a78;
+  --accent: #f08a2e;
+  --accent-strong: #ff9d3c;
+  --accent-text: #ffffff;
+  --accent-soft: #f08a2e2e;
+  --sel: #f08a2e;
+  --sel-text: #fff;
+  --good: #8fd14f;
+  --good-soft: #8fd14f26;
+  --good-line: #8fd14f66;
+  --bad: #ff5f5f;
+  --bad-soft: #ff5f5f1f;
+  --bad-line: #ff5f5f66;
+  --focus: #ffb35c;
+  --lip: #a8541a;
+  --lip-grey: rgba(20, 6, 18, 0.75);
+  --btn-hover: rgba(146, 72, 86, 0.94);
+  --clock-bg: rgba(20, 6, 18, 0.75);
+  --clock-text: #c49a8a;
+  --clock-on-bg: #fff1e0;
+  --clock-on-text: #2a1230;
+}
+
+/* ---------------------------------------------------------------- the boards that come with them */
+
+.theme-gothic cg-board {
+  background: conic-gradient(#6b5a8e 0 25%, #cdc4e0 0 50%, #6b5a8e 0 75%, #cdc4e0 0) 0 0 / 25% 25%;
+}
+.theme-blossom cg-board {
+  background: conic-gradient(#f39ac1 0 25%, #fff0f6 0 50%, #f39ac1 0 75%, #fff0f6 0) 0 0 / 25% 25%;
+}
+.theme-onyx cg-board {
+  background: conic-gradient(#2e2e2e 0 25%, #d9d9d9 0 50%, #2e2e2e 0 75%, #d9d9d9 0) 0 0 / 25% 25%;
+}
+.theme-aurora cg-board {
+  background: conic-gradient(#3d8a80 0 25%, #d6efe6 0 50%, #3d8a80 0 75%, #d6efe6 0) 0 0 / 25% 25%;
+}
+.theme-neon cg-board {
+  background: conic-gradient(#9150d6 0 25%, #f3d9ff 0 50%, #9150d6 0 75%, #f3d9ff 0) 0 0 / 25% 25%;
+}
+.theme-sea cg-board {
+  background: conic-gradient(#2f77a3 0 25%, #d4ecf7 0 50%, #2f77a3 0 75%, #d4ecf7 0) 0 0 / 25% 25%;
+}
+.theme-moss cg-board {
+  background: conic-gradient(#5f8048 0 25%, #e6ebd0 0 50%, #5f8048 0 75%, #e6ebd0 0) 0 0 / 25% 25%;
+}
+.theme-dune cg-board {
+  background: conic-gradient(#c48451 0 25%, #f6e2c0 0 50%, #c48451 0 75%, #f6e2c0 0) 0 0 / 25% 25%;
+}
+
+.theme-gothic cg-board square.last-move {
+  background-color: rgba(180, 140, 255, 0.45);
+}
+.theme-blossom cg-board square.last-move {
+  background-color: rgba(255, 79, 154, 0.38);
+}
+.theme-onyx cg-board square.last-move {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+.theme-aurora cg-board square.last-move {
+  background-color: rgba(79, 227, 162, 0.42);
+}
+.theme-neon cg-board square.last-move {
+  background-color: rgba(45, 226, 230, 0.42);
+}
+.theme-sea cg-board square.last-move {
+  background-color: rgba(76, 201, 240, 0.45);
+}
+.theme-moss cg-board square.last-move {
+  background-color: rgba(200, 230, 90, 0.5);
+}
+.theme-dune cg-board square.last-move {
+  background-color: rgba(255, 196, 92, 0.55);
+}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Check } from 'lucide-react';
-import { BOARDS, PIECE_SETS, THEMES, loadAllFonts, resolveBoard, resolvePieces, type BoardId, type Theme } from '../lib/appearance';
+import { BOARDS, PIECE_SETS, THEMES, currentThemeId, loadAllFonts, resolveBoard, resolvePieces, type BoardId, type Theme } from '../lib/appearance';
 import { useSettings } from '../state/settings';
 import { PageHead, SectionTitle } from '../components/ui';
 import { Segmented, Toggle } from '../components/Widgets';
@@ -26,7 +26,15 @@ function MiniBoard({ board, pieces, size = 4 }: { board: BoardId; pieces: string
 
 function ThemeCard({ t, on, onPick }: { t: Theme; on: boolean; onPick: () => void }) {
   return (
-    <button className={`theme-card ${on ? 'on' : ''}`} data-theme={t.id} data-display={t.display} onClick={onPick} aria-pressed={on}>
+    <button
+      className={`theme-card ${on ? 'on' : ''}`}
+      data-theme={t.id}
+      data-display={t.display}
+      data-ui={t.ui}
+      data-scene={t.scene ? '' : undefined}
+      onClick={onPick}
+      aria-pressed={on}
+    >
       <MiniBoard board={t.board} pieces={t.pieces} />
       <span className="tc-body">
         <span className="tc-name">{t.name}</span>
@@ -47,7 +55,7 @@ function ThemeCard({ t, on, onPick }: { t: Theme; on: boolean; onPick: () => voi
 export function AppearancePage() {
   const s = useSettings();
   useEffect(loadAllFonts, []);
-  const groups = ['Classic', 'Warm', 'Dark', 'Colour', 'Light', 'Accessible'] as const;
+  const groups = ['Scenes', 'Classic', 'Accessible'] as const;
   const board = resolveBoard(s);
   const pieces = resolvePieces(s);
 
@@ -57,10 +65,10 @@ export function AppearancePage() {
 
       {groups.map((g) => (
         <section key={g}>
-          <SectionTitle>{g === 'Accessible' ? 'Easier to see' : g}</SectionTitle>
+          <SectionTitle>{g === 'Accessible' ? 'Easier to see' : g === 'Scenes' ? 'Scenes' : 'Classic'}</SectionTitle>
           <div className="theme-grid">
             {THEMES.filter((t) => t.group === g).map((t) => (
-              <ThemeCard key={t.id} t={t} on={s.theme === t.id} onPick={() => s.set({ theme: t.id })} />
+              <ThemeCard key={t.id} t={t} on={currentThemeId(s.theme) === t.id} onPick={() => s.set({ theme: t.id })} />
             ))}
           </div>
         </section>
