@@ -22,7 +22,7 @@
 // convert like machines.
 //
 // From 1500 up the bot plays like a strong player: it thinks properly about
-// its top few candidate moves, to a depth that grows with the rating, and
+// its top few candidate moves, for longer the higher the rating, and
 // picks one of the moves it judges good, the best most often. It never plays
 // a move it can see loses material; its mistakes are the ones strong players
 // make, missing something deeper than it calculated. (Stockfish's own UCI_Elo
@@ -41,6 +41,8 @@ export interface StrengthParams {
   mode: 'human' | 'skilled' | 'full';
   /** Depth of the deep search (what is really going on). */
   depth: number;
+  /** Skilled mode: how long it thinks, in Stockfish nodes (same on every device). */
+  nodes: number;
   multipv: number;
   /** Chances of noticing, per turn (human mode). */
   notice: {
@@ -83,20 +85,21 @@ export interface StrengthParams {
 export const SKILLED_MIN_ELO = 1500;
 
 /**
- * Skilled-mode settings at anchor ratings, interpolated in between: search
- * depth, candidate moves, temperature and the most it will give up (both in
- * win-chance points; a pawn is worth about 9 near equality). Tuned with
- * botLadder (each level beats the one below by about its rating gap) and
- * botAudit (blunders fall steadily with the rating).
+ * Skilled-mode settings at anchor ratings, interpolated in between: how long
+ * it thinks (Stockfish nodes, interpolated on a log scale: each doubling is
+ * worth roughly 300 points here), candidate moves, temperature and the most it
+ * will give up (both in win-chance points; a pawn is worth about 9 near
+ * equality). Tuned with botLadder so each level beats the one below by about
+ * its rating gap, starting from the 1450 human-model bot.
  */
 const SKILLED: number[][] = [
-  // elo  depth multipv temp maxLoss
-  [1500, 8, 5, 2.2, 10],
-  [1800, 9, 5, 1.6, 7],
-  [2100, 10, 4, 1.1, 5],
-  [2400, 12, 4, 0.7, 3],
-  [2700, 14, 3, 0.4, 2],
-  [3150, 16, 3, 0.2, 1],
+  // elo  nodes   multipv temp maxLoss
+  [1500, 4000, 5, 3, 12],
+  [1800, 8000, 5, 2.2, 9],
+  [2100, 16000, 5, 1.6, 6.5],
+  [2400, 32000, 4, 1.1, 4.5],
+  [2700, 64000, 3, 0.7, 3],
+  [3150, 180000, 3, 0.35, 1.5],
 ];
 
 /**
@@ -114,6 +117,8 @@ const ANCHORS: number[][] = [
   [1150, 0.95, 0.87, 0.95, 0.7, 0.38, 0.42, 0.92, 0.025, 0.28, 48, 0.6, 0, 0],
   [1450, 0.97, 0.93, 0.97, 0.82, 0.65, 0.45, 0.97, 0.012, 0.45, 40, 0.78, 0, 0],
 ];
+
+const SKILLED_LOG = SKILLED.map(([elo, nodes, ...rest]) => [elo, Math.log2(nodes), ...rest]);
 
 function anchored(elo: number, col: number, table = ANCHORS): number {
   const e = Math.max(table[0][0], Math.min(table[table.length - 1][0], elo));
@@ -136,16 +141,17 @@ export function strengthFor(elo: number): StrengthParams {
     queenRush: 0,
   };
   const exact = { temperature: 0, maxLoss: 0 };
-  if (elo >= 3150) return { mode: 'full', depth: 0, multipv: 1, ...none, ...exact, movetime: 1500, bookPlies: 16 };
+  if (elo >= 3150) return { mode: 'full', depth: 0, nodes: 0, multipv: 1, ...none, ...exact, movetime: 1500, bookPlies: 16 };
   if (elo >= SKILLED_MIN_ELO)
     return {
       mode: 'skilled',
-      depth: Math.round(anchored(elo, 1, SKILLED)),
+      depth: 0,
+      nodes: Math.round(2 ** anchored(elo, 1, SKILLED_LOG)),
       multipv: Math.round(anchored(elo, 2, SKILLED)),
       ...none,
       temperature: anchored(elo, 3, SKILLED),
       maxLoss: anchored(elo, 4, SKILLED),
-      // A cap for slow phones; on most devices the depth is reached first.
+      // A cap for slow phones; on most devices the nodes run out first.
       movetime: 2500,
       bookPlies,
     };
@@ -153,6 +159,7 @@ export function strengthFor(elo: number): StrengthParams {
   return {
     mode: 'human',
     depth: e < 700 ? 8 : 10,
+    nodes: 0,
     multipv: e < 700 ? 12 : 16,
     notice: {
       capture: anchored(e, 1),
@@ -408,7 +415,7 @@ export async function chooseBotMove(engine: Engine, ctx: BotMoveContext): Promis
 }
 
 /**
- * A strong player's move: Stockfish's top candidates at the bot's depth, one
+ * A strong player's move: Stockfish's top candidates after the bot's thinking time, one
  * picked with a chance that falls off with how much worse the bot judges it
  * (exp(-loss / temperature)), and never one it judges to give up more than
  * maxLoss. The judgement is win chance plus a little for material, so with a
@@ -425,7 +432,7 @@ async function skilledMove(
 ): Promise<BotMove> {
   const res = await engine.analyse({
     ...base,
-    limits: { depth: params.depth, movetime: params.movetime },
+    limits: { nodes: params.nodes, movetime: params.movetime },
     multipv: Math.min(params.multipv, legal.length),
     options: { UCI_LimitStrength: false },
   });
