@@ -14,6 +14,7 @@ html[data-bg='storm'] {
 }
 
 html[data-bg='glassdesert'] {
+  --scene-dim: rgba(0, 0, 0, 0.34);
   --scene: url('../assets/backgrounds/glassdesert-portrait.webp');
   --scene-color: #c9b7a8;
   --scene-pos: center 40%;
@@ -25,6 +26,7 @@ html[data-bg='glassdesert'] {
 }
 
 html[data-bg='glasshall'] {
+  --scene-dim: rgba(0, 0, 0, 0.12);
   --scene: url('../assets/backgrounds/glasshall-portrait.webp');
   --scene-color: #173a78;
   --scene-pos: center 45%;
@@ -69,6 +71,7 @@ html[data-bg='space'] {
 }
 
 html[data-bg='ocean'] {
+  --scene-dim: rgba(0, 0, 0, 0.26);
   --scene: url('../assets/backgrounds/ocean-portrait.webp');
   --scene-color: #3a4250;
   --scene-pos: center 45%;
@@ -80,6 +83,7 @@ html[data-bg='ocean'] {
 }
 
 html[data-bg='sky'] {
+  --scene-dim: rgba(0, 0, 0, 0.3);
   --scene: url('../assets/backgrounds/sky-portrait.webp');
   --scene-color: #5b8fd6;
   --scene-pos: center top;
@@ -91,6 +95,7 @@ html[data-bg='sky'] {
 }
 
 html[data-bg='bubblegum'] {
+  --scene-dim: rgba(0, 0, 0, 0.22);
   --scene: url('../assets/backgrounds/bubblegum-portrait.webp');
   --scene-color: #ff7fb0;
   --scene-pos: center;
@@ -113,6 +118,7 @@ html[data-bg='metal'] {
 }
 
 html[data-bg='pixel'] {
+  --scene-dim: rgba(0, 0, 0, 0.22);
   --scene: url('../assets/backgrounds/pixel-portrait.webp');
   --scene-color: #5aa0ec;
   --scene-pos: center bottom;
@@ -135,6 +141,7 @@ html[data-bg='slate'] {
 }
 
 html[data-bg='light'] {
+  --scene-dim: rgba(0, 0, 0, 0.42);
   --scene: url('../assets/backgrounds/light-portrait.webp');
   --scene-color: #e8e8e8;
   --scene-pos: center;
@@ -179,6 +186,27 @@ html[data-bg='desert'] {
   --scene: url('../assets/scenes/desert.svg');
   --scene-color: #4a1c4e;
   --scene-pos: center bottom;
+}
+
+/* Over a picture, the pages that are hairline lists elsewhere sit on glass panels. */
+[data-scene] .list,
+[data-scene] .rating-hero,
+[data-scene] .stats-row {
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
+  border-radius: var(--radius-l);
+}
+[data-scene] .list {
+  border-top: 0;
+  padding: 0 14px;
+}
+[data-scene] .list > :last-child {
+  border-bottom: 0;
+}
+[data-scene] .rating-hero,
+[data-scene] .stats-row {
+  padding: 14px 16px;
 }
 
 /* A scene theme with no picture: its own colours on a plain background. */

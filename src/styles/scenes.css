@@ -29,6 +29,7 @@ html[data-scene],
   z-index: -1;
   pointer-events: none;
   background:
+    linear-gradient(var(--scene-dim, #0000), var(--scene-dim, #0000)),
     linear-gradient(180deg, var(--scrim) 0%, transparent 35%, transparent 70%, var(--scrim) 100%),
     var(--scene-color) var(--scene) var(--scene-pos, center bottom) / cover no-repeat;
 }
