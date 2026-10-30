@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Download, Microscope, Trash2 } from 'lucide-react';
 import { deleteGame, listGames, onDbChange, type GameRecord } from '../lib/storage/db';
-import { findBot, monogram } from '../lib/bots/bots';
+import { findBot } from '../lib/bots/bots';
+import { BotFace } from '../components/Avatar';
 import { navigate } from '../lib/router';
 import { Segmented } from '../components/Widgets';
 import { PageHead } from '../components/ui';
@@ -56,7 +57,7 @@ export function GameListRow({ g, actions }: { g: GameRecord; actions?: boolean }
       <ResultChip g={g} />
       {bot && (
         <span className="avatar" style={{ width: 34, height: 34, fontSize: '0.8rem' }}>
-          {monogram(bot.name)}
+          <BotFace bot={bot} />
         </span>
       )}
       <span className="gr-body">

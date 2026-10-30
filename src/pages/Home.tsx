@@ -18,7 +18,7 @@ import { useRepertoire } from '../state/repertoire';
 import { loadSetup, setupBot } from '../state/playSetup';
 import { useGames, userOutcome } from './Games';
 import { useOpponents, type Opponent } from '../state/opponents';
-import { Avatar } from '../components/Avatar';
+import { Avatar, BotFace } from '../components/Avatar';
 import { ScrollRow } from '../components/ScrollRow';
 import { ANDROID_URL } from '../state/friend';
 import { isAndroidBrowser, isInstalled, isIOS } from '../lib/platform';
@@ -126,7 +126,7 @@ export function HomePage() {
       <InstallHint />
       {live?.status === 'playing' && (
         <button className="dash-resume" onClick={() => navigate('/game')}>
-          <span className="avatar">{monogram(findBot(live.botId)?.name ?? 'Bot')}</span>
+          <span className="avatar">{findBot(live.botId) ? <BotFace bot={findBot(live.botId)!} /> : monogram('Bot')}</span>
           <span className="dr-body">
             <b>Your game vs {findBot(live.botId)?.name ?? 'the bot'}</b>
             <span>Tap to carry on</span>
@@ -267,6 +267,7 @@ function HistoryRow({ g }: { g: GameRecord }) {
   const o = userOutcome(g);
   const acc = g.accuracy && g.userColor ? g.accuracy[g.userColor] : undefined;
   const name = opp ? opp.name : `${g.white.name} – ${g.black.name}`;
+  const oppBot = opp?.botId ? findBot(opp.botId) : undefined;
   return (
     <div
       className="h-row"
@@ -276,7 +277,7 @@ function HistoryRow({ g }: { g: GameRecord }) {
       onKeyDown={(e) => e.key === 'Enter' && navigate(`/review/${g.id}`)}
     >
       <ModeIcon g={g} />
-      <span className="h-avatar">{monogram(name)}</span>
+      <span className="h-avatar">{oppBot ? <BotFace bot={oppBot} /> : monogram(name)}</span>
       <span className="h-name">
         <b>{name}</b>
         {opp?.elo ? <span className="faint"> ({opp.elo})</span> : null}

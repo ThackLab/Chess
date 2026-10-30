@@ -215,6 +215,12 @@ export const BOTS: BotProfile[] = [
   },
 ];
 
+/** The bot's portrait (Microsoft's Fluent Emoji, MIT; see public/bots). */
+export function botArtUrl(bot: BotProfile): string {
+  const file = `bots/${bot.id.startsWith('custom-') ? 'custom' : bot.id}.webp`;
+  return typeof document === 'undefined' ? file : new URL(file, document.baseURI).href;
+}
+
 /** One or two letters standing in for a player in the minimal UI ("Pip" -> "P", "GM Atlas" -> "A", "Stockfish 18" -> "S"). */
 export function monogram(name: string): string {
   const words = name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w) && !['The', 'GM', 'IM', 'FM'].includes(w));
@@ -229,7 +235,7 @@ export function customBot(elo: number): BotProfile {
     avatar: '🎯',
     tint: '#ffab91',
     style: 'balanced',
-    tagline: `Stockfish tuned to ${elo}`,
+    tagline: `Tuned to play at ${elo}`,
     bio: 'A bot tuned to the exact rating you choose.',
   };
 }

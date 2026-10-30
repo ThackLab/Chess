@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { analyseLive, pauseLive } from '../state/liveAnalysis';
 import { checkMove, opponentSlip, stopCoach } from '../lib/coach/blunderCheck';
-import { monogram } from '../lib/bots/bots';
 import { ArrowUpDown, ChevronLeft, ChevronRight, Flag, Handshake, Lightbulb, Microscope, Plus, RotateCcw, Undo2 } from 'lucide-react';
 import type { DrawShape } from 'chessground/draw';
 import { Board, type BoardHandle, type PromotionPiece } from '../components/Board';
 import { EvalBar, Modal, PlayerBar, formatClock, toast } from '../components/Widgets';
-import { AvatarFace } from '../components/Avatar';
+import { AvatarFace, BotFace } from '../components/Avatar';
 import { MoveList, MoveStrip } from '../components/MoveList';
 import { botAcceptsDraw, chooseBotMove, thinkTime } from '../lib/bots/brain';
 import { getAnalysisEngine, getBotEngine } from '../lib/engine/manager';
@@ -251,7 +250,7 @@ export function GamePage() {
   const playerFor = (c: 'w' | 'b') =>
     c === userColor
       ? { avatar: <AvatarFace av={settings.avatar} photo={settings.photo} name={userName || 'You'} />, tint: undefined, name: userName, elo: rating }
-      : { avatar: monogram(bot.name), tint: undefined, name: bot.name, elo: bot.elo };
+      : { avatar: <BotFace bot={bot} />, tint: undefined, name: bot.name, elo: bot.elo };
   const playing = game.status === 'playing';
   const userToMove = playing && chess.turn() === userColor;
 

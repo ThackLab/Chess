@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Dices, Globe, Play, SlidersHorizontal, Users } from 'lucide-react';
-import { BOTS, findBot, monogram, type BotProfile } from '../lib/bots/bots';
+import { BOTS, customBot, findBot, monogram, type BotProfile } from '../lib/bots/bots';
 import { navigate } from '../lib/router';
 import { validateFen, START_FEN } from '../lib/chess/utils';
 import { useLiveGame } from '../state/game';
@@ -8,6 +8,7 @@ import { useProfile } from '../state/profile';
 import { TIME_CONTROLS, hasSavedSetup, loadSetup, saveSetup, setupBot, startBotGame, suggestedBot, type Setup } from '../state/playSetup';
 import { Segmented, Toggle } from '../components/Widgets';
 import { ScrollRow } from '../components/ScrollRow';
+import { BotFace } from '../components/Avatar';
 import { PageHead } from '../components/ui';
 
 export function PlayPage({ initialFen }: { initialFen?: string }) {
@@ -47,13 +48,17 @@ export function PlayPage({ initialFen }: { initialFen?: string }) {
           <div className="bot-grid">
             {BOTS.map((b) => (
               <button key={b.id} className={`bot-tile ${bot.id === b.id ? 'sel' : ''}`} onClick={() => setSetup({ botId: b.id })}>
-                <div className="avatar">{monogram(b.name)}</div>
+                <div className="avatar">
+                  <BotFace bot={b} />
+                </div>
                 <div className="nm">{b.name}</div>
                 <div className="elo">{b.id === suggested.id ? 'your level' : b.elo}</div>
               </button>
             ))}
             <button className={`bot-tile ${setup.botId.startsWith('custom') ? 'sel' : ''}`} onClick={() => setSetup({ botId: 'custom' })}>
-              <div className="avatar">#</div>
+              <div className="avatar">
+                <BotFace bot={customBot(setup.customElo)} />
+              </div>
               <div className="nm">Custom</div>
               <div className="elo">any Elo</div>
             </button>
@@ -62,7 +67,9 @@ export function PlayPage({ initialFen }: { initialFen?: string }) {
 
         <aside className="card">
           <div className="row" style={{ alignItems: 'center', flexWrap: 'nowrap', gap: 14 }}>
-            <div className="avatar lg">{monogram(bot.name)}</div>
+            <div className="avatar lg">
+              <BotFace bot={bot} />
+            </div>
             <div style={{ minWidth: 0 }}>
               <h2 style={{ marginBottom: 4 }}>{bot.name}</h2>
               <span className="pill">{bot.elo} Elo</span>
@@ -148,11 +155,22 @@ export function PlayPage({ initialFen }: { initialFen?: string }) {
             <Play size={20} fill="currentColor" /> Play {bot.name}
           </button>
           <p className="faint" style={{ fontSize: '0.78rem', margin: 0 }}>
-            Bots under 1500 play like people at their rating: they notice some things and miss others. Stronger bots use Stockfish’s strength limiter.
+            Bots under 1500 play like people at their rating: they notice some things and miss others. From 1500 up they play like strong players:
+            they rarely blunder, but miss deep ideas.
           </p>
         </aside>
       </div>
     </div>
+  );
+}
+
+/** A colour choice with a swatch of the pieces you'd have. */
+function SideLabel({ side }: { side: 'w' | 'b' | 'random' }) {
+  return (
+    <span className="side-label">
+      <span className={`side-swatch ${side}`} aria-hidden="true" />
+      {side === 'w' ? 'White' : side === 'b' ? 'Black' : 'Random'}
+    </span>
   );
 }
 
@@ -188,7 +206,7 @@ export function PlayHub() {
       <PageHead title="Play" back="/" />
       {live?.status === 'playing' && (
         <button className="dash-resume" onClick={() => navigate('/game')}>
-          <span className="avatar">{monogram(findBot(live.botId)?.name ?? 'Bot')}</span>
+          <span className="avatar">{findBot(live.botId) ? <BotFace bot={findBot(live.botId)!} /> : monogram('Bot')}</span>
           <span className="dr-body">
             <b>Your game vs {findBot(live.botId)?.name ?? 'the bot'}</b>
             <span>Tap to carry on</span>
@@ -207,12 +225,14 @@ export function PlayHub() {
 
       <section className="opponent-card card-box">
         <div className="opp-hero">
-          <span className="avatar xl">{monogram(bot.name)}</span>
+          <span className="avatar opp-portrait">
+            <BotFace bot={bot} />
+          </span>
           <div className="opp-name">{bot.name}</div>
           <div className="opp-meta">
-            <span className="num">{bot.elo}</span>
-            {bot.id === suggested.id && <span>· your level</span>}
-            {bot.elo > suggested.elo + 150 && <span>· a challenge</span>}
+            <span className="opp-elo num">{bot.elo}</span>
+            {bot.id === suggested.id && <span className="opp-badge">Your level</span>}
+            {bot.elo > suggested.elo + 150 && <span className="opp-badge hard">A challenge</span>}
           </div>
           <div className="opp-tagline">{bot.tagline}</div>
         </div>
@@ -224,7 +244,9 @@ export function PlayHub() {
               onClick={() => setSetup({ botId: b.id })}
               aria-label={`${b.name}, ${b.elo}`}
             >
-              <span className="avatar">{monogram(b.name)}</span>
+              <span className="avatar">
+                <BotFace bot={b} />
+              </span>
               <span className="elo">{b.elo}</span>
             </button>
           ))}
@@ -234,9 +256,9 @@ export function PlayHub() {
             value={setup.color}
             onChange={(color) => setSetup({ color })}
             options={[
-              { value: 'w', label: 'White' },
-              { value: 'random', label: 'Random' },
-              { value: 'b', label: 'Black' },
+              { value: 'w', label: <SideLabel side="w" /> },
+              { value: 'random', label: <SideLabel side="random" /> },
+              { value: 'b', label: <SideLabel side="b" /> },
             ]}
           />
           <Toggle

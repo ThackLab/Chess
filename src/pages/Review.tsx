@@ -22,8 +22,8 @@ import { expectedFor, scoreToExpected } from '../lib/review/winprob';
 import { getGame, getReview, onDbChange, saveGame, savePuzzles, saveReview, type GameRecord } from '../lib/storage/db';
 import { summariseGame } from '../lib/review/review';
 import { puzzlesFrom, useReviewer } from '../state/reviewer';
-import { monogram } from '../lib/bots/bots';
-import { AvatarFace } from '../components/Avatar';
+import { findBot, monogram } from '../lib/bots/bots';
+import { AvatarFace, BotFace } from '../components/Avatar';
 import { useSettings } from '../state/settings';
 import type { Score } from '../lib/engine/uci';
 import { CountUp, Moves, Rich, San } from '../components/Rich';
@@ -361,7 +361,13 @@ export function ReviewPage({ gameId }: { gameId: string }) {
     return (
       <PlayerBar
         avatar={
-          p.isUser ? <AvatarFace av={me.avatar} photo={me.photo} name={p.name || 'You'} /> : monogram(p.name || (c === 'w' ? 'White' : 'Black'))
+          p.isUser ? (
+            <AvatarFace av={me.avatar} photo={me.photo} name={p.name || 'You'} />
+          ) : p.botId && findBot(p.botId) ? (
+            <BotFace bot={findBot(p.botId)!} />
+          ) : (
+            monogram(p.name || (c === 'w' ? 'White' : 'Black'))
+          )
         }
         tint={undefined}
         name={p.name}
