@@ -91,8 +91,8 @@ export const THEMES: Theme[] = [
   },
   scene({
     id: 'gothic',
-    name: 'Gothic Night',
-    blurb: 'A full moon over cathedral spires, stars and bats. Violet and silver.',
+    name: 'Gothic Storm',
+    blurb: 'Lightning strikes moonlit peaks, rain falls on the lake. A rendered photo.',
     board: 'gothic',
     pieces: 'fantasy',
     swatch: ['#120c26', '#f4efff', '#9d6bff'],

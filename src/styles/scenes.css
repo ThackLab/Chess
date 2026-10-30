@@ -30,7 +30,7 @@ html[data-scene],
   pointer-events: none;
   background:
     linear-gradient(180deg, var(--scrim) 0%, transparent 35%, transparent 70%, var(--scrim) 100%),
-    var(--scene-color) var(--scene) center bottom / cover no-repeat;
+    var(--scene-color) var(--scene) var(--scene-pos, center bottom) / cover no-repeat;
 }
 
 /* ---------------------------------------------------------------- frosted glass */
@@ -84,7 +84,7 @@ html[data-scene],
 .theme-card[data-scene] {
   background:
     linear-gradient(180deg, transparent 30%, var(--scrim) 100%),
-    var(--scene-color) var(--scene) center bottom / cover no-repeat;
+    var(--scene-color) var(--scene) var(--scene-pos, center bottom) / cover no-repeat;
 }
 .theme-card[data-scene] .tc-body {
   text-shadow: 0 1px 6px var(--scrim);
@@ -93,7 +93,9 @@ html[data-scene],
 /* ---------------------------------------------------------------- Gothic Night */
 
 [data-theme='gothic'] {
-  --scene: url('../assets/scenes/gothic.svg');
+  /* A rendered photo (scripts/photoscenes.py): portrait for phones, landscape for wide screens. */
+  --scene: url('../assets/scenes/storm-portrait.webp');
+  --scene-pos: center;
   --hero: linear-gradient(135deg, rgba(110, 80, 190, 0.84), rgba(46, 30, 92, 0.84));
   --scene-color: #140d38;
   --scrim: #07051acc;
@@ -129,6 +131,12 @@ html[data-scene],
   --clock-text: #a99cd0;
   --clock-on-bg: #f4efff;
   --clock-on-text: #1a1033;
+}
+
+@media (min-aspect-ratio: 1/1) {
+  [data-theme='gothic'] {
+    --scene: url('../assets/scenes/storm-landscape.webp');
+  }
 }
 
 /* ---------------------------------------------------------------- Blossom (light) */

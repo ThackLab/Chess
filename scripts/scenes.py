@@ -334,5 +334,6 @@ def desert():
         b += f'<path transform="translate({x} {y}) scale(0.9)" d="{camel}" fill="#3e1733"/>'
     svg('desert', b, defs)
 
-for fn in (gothic, blossom, aurora, synthwave, deepsea, forest, desert):
+# Gothic is now a rendered photo: see scripts/photoscenes.py.
+for fn in (blossom, aurora, synthwave, deepsea, forest, desert):
     fn()
