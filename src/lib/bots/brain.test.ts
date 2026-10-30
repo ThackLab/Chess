@@ -52,4 +52,26 @@ describe('bot move choice', () => {
     const mv = await chooseBotMove(engine, { startFen: fen, moves: [], bot: customBot(250), rng: () => 0.99 });
     expect(['g2h3', 'h2g3']).toContain(mv.uci);
   });
+
+  it('a strong bot never plays a move it sees losing material, and mostly plays the best', async () => {
+    const fen = 'k7/8/8/8/8/8/4P3/K7 w - - 0 1';
+    const engine = fakeEngine([
+      { pv: ['e2e4'], cp: 60 },
+      { pv: ['e2e3'], cp: 45 },
+      { pv: ['a1b1'], cp: 20 },
+      { pv: ['a1a2'], cp: -250 },
+    ]);
+    const best: number[] = [];
+    for (const elo of [1600, 2200]) {
+      const count = new Map<string, number>();
+      for (let i = 0; i < 200; i++) {
+        const mv = await chooseBotMove(engine, { startFen: fen, moves: [], bot: customBot(elo), rng: seeded(i + 1) });
+        count.set(mv.uci, (count.get(mv.uci) ?? 0) + 1);
+      }
+      expect(count.get('a1a2') ?? 0).toBe(0);
+      best.push(count.get('e2e4')!);
+    }
+    expect(best[0]).toBeGreaterThan(90);
+    expect(best[1]).toBeGreaterThan(best[0]);
+  });
 });

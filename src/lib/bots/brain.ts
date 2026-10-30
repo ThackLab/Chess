@@ -19,17 +19,26 @@
 // can be taken straight back), plus some of Stockfish's deep evaluation at
 // higher ratings. When clearly winning it only sometimes plays the engine's
 // move (below 700, only in a nearly empty endgame), so low-rated bots don't
-// convert like machines. From 1500 up we use Stockfish's UCI_Elo limiter.
+// convert like machines.
+//
+// From 1500 up the bot plays like a strong player: it thinks properly about
+// its top few candidate moves, to a depth that grows with the rating, and
+// picks one of the moves it judges good, the best most often. It never plays
+// a move it can see loses material; its mistakes are the ones strong players
+// make, missing something deeper than it calculated. (Stockfish's own UCI_Elo
+// limiter instead plays a random weaker move now and then, which at 1600 to
+// 2200 meant obvious blunders and levels that lost faster than lower ones.)
 import { Chess, type Color, type Move, type Square } from 'chess.js';
 import type { Engine } from '../engine/engine';
 import { scoreToCp, type Score } from '../engine/uci';
+import { winPercent } from '../review/winprob';
 import type { OpeningBook } from '../chess/openings';
 import { PIECE_VALUE, moveToUci, other } from '../chess/utils';
 import { hangingPieces } from '../chess/tactics';
 import type { BotProfile } from './bots';
 
 export interface StrengthParams {
-  mode: 'human' | 'limited' | 'full';
+  mode: 'human' | 'skilled' | 'full';
   /** Depth of the deep search (what is really going on). */
   depth: number;
   multipv: number;
@@ -65,21 +74,30 @@ export interface StrengthParams {
   movetime: number;
   /** How many plies the bot may follow its opening book. */
   bookPlies: number;
+  /** Skilled mode: how far it strays from the best move, in win-chance points. */
+  temperature: number;
+  /** Skilled mode: the most it will give up on a move, in win-chance points. */
+  maxLoss: number;
 }
 
-export const STOCKFISH_MIN_ELO = 1500;
-export const STOCKFISH_MAX_ELO = 3190;
+export const SKILLED_MIN_ELO = 1500;
 
 /**
- * The UCI_Elo that plays at a given app rating. Stockfish's scale is
- * calibrated against engines at long time controls; at the app's speed its
- * low settings play weaker than labelled (head-to-head, the 1450 human-model
- * bot beat UCI_Elo 1500 and 1600 about 70% of the time), so the low end is
- * lifted, fading out by 2300.
+ * Skilled-mode settings at anchor ratings, interpolated in between: search
+ * depth, candidate moves, temperature and the most it will give up (both in
+ * win-chance points; a pawn is worth about 9 near equality). Tuned with
+ * botLadder (each level beats the one below by about its rating gap) and
+ * botAudit (blunders fall steadily with the rating).
  */
-export function stockfishEloFor(elo: number): number {
-  return Math.min(STOCKFISH_MAX_ELO, Math.round(elo + 230 * Math.max(0, (2300 - elo) / 800)));
-}
+const SKILLED: number[][] = [
+  // elo  depth multipv temp maxLoss
+  [1500, 5, 6, 3.5, 15],
+  [1800, 6, 5, 2.5, 10],
+  [2100, 8, 5, 1.6, 7],
+  [2400, 10, 4, 1, 4.5],
+  [2700, 12, 4, 0.6, 3],
+  [3150, 14, 3, 0.3, 1.5],
+];
 
 /**
  * Human-model settings at anchor ratings, interpolated in between. Tuned with
@@ -97,11 +115,11 @@ const ANCHORS: number[][] = [
   [1450, 0.97, 0.93, 0.97, 0.82, 0.65, 0.45, 0.97, 0.012, 0.45, 40, 0.78, 0, 0],
 ];
 
-function anchored(elo: number, col: number): number {
-  const e = Math.max(ANCHORS[0][0], Math.min(ANCHORS[ANCHORS.length - 1][0], elo));
+function anchored(elo: number, col: number, table = ANCHORS): number {
+  const e = Math.max(table[0][0], Math.min(table[table.length - 1][0], elo));
   let i = 0;
-  while (i < ANCHORS.length - 2 && e > ANCHORS[i + 1][0]) i++;
-  const [a, b] = [ANCHORS[i], ANCHORS[i + 1]];
+  while (i < table.length - 2 && e > table[i + 1][0]) i++;
+  const [a, b] = [table[i], table[i + 1]];
   const t = (e - a[0]) / (b[0] - a[0]);
   return a[col] + (b[col] - a[col]) * t;
 }
@@ -117,11 +135,20 @@ export function strengthFor(elo: number): StrengthParams {
     checkLove: 0,
     queenRush: 0,
   };
-  if (elo >= 3150) return { mode: 'full', depth: 0, multipv: 1, ...none, movetime: 1500, bookPlies: 16 };
-  if (elo >= STOCKFISH_MIN_ELO) {
-    const t = (elo - STOCKFISH_MIN_ELO) / (STOCKFISH_MAX_ELO - STOCKFISH_MIN_ELO);
-    return { mode: 'limited', depth: 0, multipv: 1, ...none, movetime: Math.round(300 + 900 * t), bookPlies };
-  }
+  const exact = { temperature: 0, maxLoss: 0 };
+  if (elo >= 3150) return { mode: 'full', depth: 0, multipv: 1, ...none, ...exact, movetime: 1500, bookPlies: 16 };
+  if (elo >= SKILLED_MIN_ELO)
+    return {
+      mode: 'skilled',
+      depth: Math.round(anchored(elo, 1, SKILLED)),
+      multipv: Math.round(anchored(elo, 2, SKILLED)),
+      ...none,
+      temperature: anchored(elo, 3, SKILLED),
+      maxLoss: anchored(elo, 4, SKILLED),
+      // A cap for slow phones; on most devices the depth is reached first.
+      movetime: 2500,
+      bookPlies,
+    };
   const e = Math.max(100, elo);
   return {
     mode: 'human',
@@ -144,6 +171,7 @@ export function strengthFor(elo: number): StrengthParams {
     queenRush: anchored(e, 13),
     movetime: 0,
     bookPlies,
+    ...exact,
   };
 }
 
@@ -238,16 +266,12 @@ export async function chooseBotMove(engine: Engine, ctx: BotMoveContext): Promis
   if (fromBook && legal.some((m) => moveToUci(m) === fromBook)) return { uci: fromBook, san: sanOf(fromBook), source: 'book' };
 
   const base = { fen: ctx.startFen, moves: ctx.moves };
-  if (params.mode !== 'human') {
-    const res = await engine.analyse({
-      ...base,
-      limits: { movetime: params.movetime },
-      multipv: 1,
-      options: params.mode === 'full' ? { UCI_LimitStrength: false } : { UCI_LimitStrength: true, UCI_Elo: stockfishEloFor(ctx.bot.elo) },
-    });
+  if (params.mode === 'full') {
+    const res = await engine.analyse({ ...base, limits: { movetime: params.movetime }, multipv: 1, options: { UCI_LimitStrength: false } });
     const uci = res.bestmove ?? moveToUci(legal[0]);
     return { uci, san: sanOf(uci), source: 'engine', score: res.lines[0]?.score };
   }
+  if (params.mode === 'skilled') return skilledMove(engine, base, chess.turn(), params, rng, sanOf, legal);
 
   // Human-like selection. Simplified positions get a deeper look so that won
   // endgames are eventually converted instead of shuffled forever.
@@ -381,6 +405,58 @@ export async function chooseBotMove(engine: Engine, ctx: BotMoveContext): Promis
     }
   }
   return { uci: choice, san: sanOf(choice), source: 'engine', score: scoreOf(choice) };
+}
+
+/**
+ * A strong player's move: Stockfish's top candidates at the bot's depth, one
+ * picked with a chance that falls off with how much worse the bot judges it
+ * (exp(-loss / temperature)), and never one it judges to give up more than
+ * maxLoss. The judgement is win chance plus a little for material, so with a
+ * big lead it still prefers the moves that win fastest.
+ */
+async function skilledMove(
+  engine: Engine,
+  base: { fen: string; moves: string[] },
+  me: Color,
+  params: StrengthParams,
+  rng: () => number,
+  sanOf: (uci: string) => string,
+  legal: Move[],
+): Promise<BotMove> {
+  const res = await engine.analyse({
+    ...base,
+    limits: { depth: params.depth, movetime: params.movetime },
+    multipv: Math.min(params.multipv, legal.length),
+    options: { UCI_LimitStrength: false },
+  });
+  const lines = res.lines.filter((l) => l.pv.length);
+  if (!lines.length) {
+    const uci = res.bestmove ?? moveToUci(legal[0]);
+    return { uci, san: sanOf(uci), source: 'engine' };
+  }
+  const sign = me === 'w' ? 1 : -1;
+  // A forced mate it can see, it plays: the quickest one.
+  const mates = lines.filter((l) => l.score.type === 'mate' && sign * l.score.value > 0);
+  if (mates.length) {
+    const quick = mates.reduce((a, b) => (Math.abs(b.score.value) < Math.abs(a.score.value) ? b : a));
+    return { uci: quick.pv[0], san: sanOf(quick.pv[0]), source: 'engine', score: quick.score };
+  }
+  const value = (sc: Score) => {
+    const win = sign === 1 ? winPercent(sc) : 100 - winPercent(sc);
+    // Being mated is the worst outcome, and a later mate less bad than a sooner one.
+    const cp =
+      sc.type === 'mate'
+        ? sign * Math.sign(sc.value) * (1600 - 20 * Math.min(30, Math.abs(sc.value)))
+        : sign * Math.max(-1500, Math.min(1500, sc.value));
+    return win + (0.6 * cp) / 100;
+  };
+  const best = Math.max(...lines.map((l) => value(l.score)));
+  const options = lines
+    .map((l) => ({ l, loss: best - value(l.score) }))
+    .filter((o) => o.loss <= params.maxLoss)
+    .map((o) => ({ item: o.l, w: Math.exp(-o.loss / params.temperature) }));
+  const pick = pickWeighted(options, rng);
+  return { uci: pick.pv[0], san: sanOf(pick.pv[0]), source: 'engine', score: pick.score };
 }
 
 /** Whether the bot accepts a draw offer, given the eval from the bot's point of view (cp). */
