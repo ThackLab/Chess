@@ -1,0 +1,345 @@
+/* Backgrounds chosen apart from the theme (Settings → Theme → Background).
+   html[data-bg] outranks a scene theme's own picture. The pictures are made by
+   scripts/backgrounds/. */
+
+html[data-bg='storm'] {
+  --scene: url('../assets/scenes/storm-portrait.webp');
+  --scene-color: #140d38;
+  --scene-pos: center;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='storm'] {
+    --scene: url('../assets/scenes/storm-landscape.webp');
+  }
+}
+
+html[data-bg='glassdesert'] {
+  --scene: url('../assets/backgrounds/glassdesert-portrait.webp');
+  --scene-color: #c9b7a8;
+  --scene-pos: center 40%;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='glassdesert'] {
+    --scene: url('../assets/backgrounds/glassdesert-landscape.webp');
+  }
+}
+
+html[data-bg='glasshall'] {
+  --scene: url('../assets/backgrounds/glasshall-portrait.webp');
+  --scene-color: #173a78;
+  --scene-pos: center 45%;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='glasshall'] {
+    --scene: url('../assets/backgrounds/glasshall-landscape.webp');
+  }
+}
+
+html[data-bg='ebony'] {
+  --scene: url('../assets/backgrounds/ebony-portrait.webp');
+  --scene-color: #060606;
+  --scene-pos: center 55%;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='ebony'] {
+    --scene: url('../assets/backgrounds/ebony-landscape.webp');
+  }
+}
+
+html[data-bg='woodset'] {
+  --scene: url('../assets/backgrounds/woodset-portrait.webp');
+  --scene-color: #120a06;
+  --scene-pos: center 55%;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='woodset'] {
+    --scene: url('../assets/backgrounds/woodset-landscape.webp');
+  }
+}
+
+html[data-bg='space'] {
+  --scene: url('../assets/backgrounds/space-portrait.webp');
+  --scene-color: #020308;
+  --scene-pos: center bottom;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='space'] {
+    --scene: url('../assets/backgrounds/space-landscape.webp');
+  }
+}
+
+html[data-bg='ocean'] {
+  --scene: url('../assets/backgrounds/ocean-portrait.webp');
+  --scene-color: #3a4250;
+  --scene-pos: center 45%;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='ocean'] {
+    --scene: url('../assets/backgrounds/ocean-landscape.webp');
+  }
+}
+
+html[data-bg='sky'] {
+  --scene: url('../assets/backgrounds/sky-portrait.webp');
+  --scene-color: #5b8fd6;
+  --scene-pos: center top;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='sky'] {
+    --scene: url('../assets/backgrounds/sky-landscape.webp');
+  }
+}
+
+html[data-bg='bubblegum'] {
+  --scene: url('../assets/backgrounds/bubblegum-portrait.webp');
+  --scene-color: #ff7fb0;
+  --scene-pos: center;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='bubblegum'] {
+    --scene: url('../assets/backgrounds/bubblegum-landscape.webp');
+  }
+}
+
+html[data-bg='metal'] {
+  --scene: url('../assets/backgrounds/metal-portrait.webp');
+  --scene-color: #2a2b2e;
+  --scene-pos: center;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='metal'] {
+    --scene: url('../assets/backgrounds/metal-landscape.webp');
+  }
+}
+
+html[data-bg='pixel'] {
+  --scene: url('../assets/backgrounds/pixel-portrait.webp');
+  --scene-color: #5aa0ec;
+  --scene-pos: center bottom;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='pixel'] {
+    --scene: url('../assets/backgrounds/pixel-landscape.webp');
+  }
+}
+
+html[data-bg='slate'] {
+  --scene: url('../assets/backgrounds/slate-portrait.webp');
+  --scene-color: #1d1f24;
+  --scene-pos: center;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='slate'] {
+    --scene: url('../assets/backgrounds/slate-landscape.webp');
+  }
+}
+
+html[data-bg='light'] {
+  --scene: url('../assets/backgrounds/light-portrait.webp');
+  --scene-color: #e8e8e8;
+  --scene-pos: center;
+}
+@media (min-aspect-ratio: 1/1) {
+  html[data-bg='light'] {
+    --scene: url('../assets/backgrounds/light-landscape.webp');
+  }
+}
+
+html[data-bg='blossom'] {
+  --scene: url('../assets/scenes/blossom.svg');
+  --scene-color: #ffd9e8;
+  --scene-pos: center bottom;
+}
+
+html[data-bg='aurora'] {
+  --scene: url('../assets/scenes/aurora.svg');
+  --scene-color: #04192a;
+  --scene-pos: center bottom;
+}
+
+html[data-bg='synthwave'] {
+  --scene: url('../assets/scenes/synthwave.svg');
+  --scene-color: #2a0a52;
+  --scene-pos: center bottom;
+}
+
+html[data-bg='deepsea'] {
+  --scene: url('../assets/scenes/deepsea.svg');
+  --scene-color: #06416b;
+  --scene-pos: center bottom;
+}
+
+html[data-bg='forest'] {
+  --scene: url('../assets/scenes/forest.svg');
+  --scene-color: #0c2a1d;
+  --scene-pos: center bottom;
+}
+
+html[data-bg='desert'] {
+  --scene: url('../assets/scenes/desert.svg');
+  --scene-color: #4a1c4e;
+  --scene-pos: center bottom;
+}
+
+/* A scene theme with no picture: its own colours on a plain background. */
+html[data-bg='none'] {
+  --scene: none;
+}
+
+/* The plain dark themes over a picture: their cards and bars as smoked glass. */
+html[data-glass='dark'] {
+  --scrim: #000000b3;
+  --surface: rgba(30, 29, 27, 0.72);
+  --surface-2: rgba(58, 56, 53, 0.66);
+  --surface-3: rgba(78, 75, 72, 0.86);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --lip-grey: rgba(14, 13, 12, 0.8);
+  --btn-hover: rgba(96, 92, 88, 0.92);
+  --clock-bg: rgba(14, 13, 12, 0.78);
+  --hero: linear-gradient(135deg, rgba(60, 58, 55, 0.8), rgba(34, 33, 31, 0.8));
+}
+html[data-glass='dark'] .appbar {
+  background: rgba(22, 21, 20, 0.66);
+}
+
+/* ---------------------------------------------------------------- the Theme screen (pages/Appearance.tsx) */
+
+.theme-page .tp-preview {
+  max-width: 440px;
+  margin: 4px auto 0;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.tp-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 18px 0 0;
+  border-bottom: 2px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tp-tabs::-webkit-scrollbar {
+  display: none;
+}
+.tp-tabs button {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 4px 12px;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+}
+.tp-tabs button.on {
+  color: var(--text);
+}
+.tp-tabs button.on::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: -2px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+[data-scene] .tp-tabs button {
+  text-shadow: 0 1px 8px var(--scrim);
+}
+.tp-name {
+  margin: 16px 0 12px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--text-dim);
+}
+[data-scene] .tp-name {
+  text-shadow: 0 1px 8px var(--scrim);
+}
+.tp-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (min-width: 560px) {
+  .tp-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.tp-tile {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background-color: var(--surface-2);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+.tp-tile:active {
+  transform: scale(0.96);
+}
+.tp-tile.on {
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 3px 10px rgba(0, 0, 0, 0.3);
+}
+.tp-auto,
+.tp-none {
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: 2px dashed var(--line-strong);
+}
+.tp-piece {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 4px;
+}
+.tp-piece piece {
+  display: block;
+  position: static;
+  width: 100%;
+  aspect-ratio: 1;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.tp-note {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  margin: 0 0 14px;
+}
+[data-scene] .tp-note {
+  text-shadow: 0 1px 8px var(--scrim);
+}
+
+/* The theme button in the top bar. */
+.appbar-theme {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-right: 6px;
+  border-radius: 10px;
+  color: var(--text-dim);
+}
+.appbar-theme:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}

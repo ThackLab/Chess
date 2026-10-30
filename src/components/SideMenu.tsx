@@ -2,6 +2,7 @@
 // from the left with every part of the app worth going to.
 import { useEffect, type ReactNode } from 'react';
 import {
+  Palette,
   BookOpen,
   Bot,
   Download,
@@ -51,6 +52,9 @@ export function AppBar({ onMenu }: { onMenu: () => void }) {
         <Logo size={26} /> Grandmasters
       </a>
       <span className="spacer" />
+      <a className="appbar-theme" href="#/appearance" aria-label="Theme" title="Theme">
+        <Palette size={22} />
+      </a>
       <span className="appbar-streak" title="Days in a row with some training">
         <Flame size={20} className="ic-flame" fill="currentColor" />
         {streak}
@@ -166,10 +170,13 @@ function MenuBody({ path, onClose }: { path: string; onClose: () => void }) {
           </span>
           <span className="di-label">Profile</span>
         </button>
-        <button
-          className={`drawer-item ${path.startsWith('/settings') || path.startsWith('/appearance') ? 'on' : ''}`}
-          onClick={() => go('/settings')}
-        >
+        <button className={`drawer-item ${path.startsWith('/appearance') ? 'on' : ''}`} onClick={() => go('/appearance')}>
+          <span className="di-ico">
+            <Palette size={22} />
+          </span>
+          <span className="di-label">Theme</span>
+        </button>
+        <button className={`drawer-item ${path.startsWith('/settings') ? 'on' : ''}`} onClick={() => go('/settings')}>
           <span className="di-ico">
             <Settings size={22} />
           </span>

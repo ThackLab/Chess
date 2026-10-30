@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { currentThemeId, type BoardId, type PieceSetId, type ThemeId } from '../lib/appearance';
+import { currentThemeId, type BackgroundChoice, type BoardId, type PieceSetId, type ThemeId } from '../lib/appearance';
 
 /** A board colour, or 'auto' for the one that comes with the theme. */
 export type BoardTheme = BoardId | 'auto';
@@ -15,6 +15,8 @@ export interface Settings {
   theme: ThemeId;
   boardTheme: BoardTheme;
   pieceSet: PieceSetId | 'auto';
+  /** The picture behind the app, apart from the board ('auto': the theme's own). */
+  background: BackgroundChoice;
   textSize: 'm' | 'l' | 'xl';
   /** Blue and orange instead of green and red for right and wrong. */
   colorblind: boolean;
@@ -58,6 +60,7 @@ export const useSettings = create<Settings>()(
       theme: 'club',
       boardTheme: 'auto',
       pieceSet: 'auto',
+      background: 'auto',
       textSize: 'm',
       colorblind: false,
       squareNames: false,

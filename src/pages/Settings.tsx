@@ -55,7 +55,7 @@ export function SettingsPage() {
     <div className="page">
       <PageHead title="Settings" back="/you" />
       <div className="list" style={{ marginBottom: 16 }}>
-        <ListRow title="Appearance" sub={`${themeOf(s.theme).name} theme · boards, pieces, text size and colour-blind options`} href="/appearance" />
+        <ListRow title="Theme" sub={`${themeOf(s.theme).name} · board, pieces, background, text size and colour-blind options`} href="/appearance" />
       </div>
       <div className="settings-grid">
         <section className="card">
