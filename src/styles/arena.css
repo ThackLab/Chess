@@ -1453,3 +1453,72 @@
 .credit a {
   color: inherit;
 }
+
+/* Rows that scroll sideways (components/ScrollRow.tsx): fade the edge with more to see. */
+.scroll-row {
+  position: relative;
+}
+.scroll-row.more-right > :first-child {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+}
+.scroll-row.more-left > :first-child {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px);
+  mask-image: linear-gradient(90deg, transparent, #000 56px);
+}
+.scroll-row.more-left.more-right > :first-child {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+}
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-60%);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  display: none;
+  place-items: center;
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+.scroll-btn.left {
+  left: -6px;
+}
+.scroll-btn.right {
+  right: -6px;
+}
+/* Arrows only where there's a mouse; on phones you swipe. */
+@media (hover: hover) and (pointer: fine) {
+  .scroll-btn {
+    display: grid;
+  }
+}
+.scroll-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.scroll-dots button {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text-faint);
+  opacity: 0.55;
+  cursor: pointer;
+  transition:
+    width 0.2s,
+    opacity 0.2s;
+}
+.scroll-dots button.on {
+  width: 20px;
+  background: var(--accent);
+  opacity: 1;
+}

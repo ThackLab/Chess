@@ -132,7 +132,7 @@ export function YouPage() {
         <div className="card" style={{ marginTop: 10, padding: '12px 16px' }}>
           <div className="row" style={{ marginBottom: 4 }}>
             <span className="faint" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
-              Game rating
+              Rating vs bots
             </span>
             <span className="spacer" />
             {avgAcc !== null && (

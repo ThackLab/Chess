@@ -7,6 +7,7 @@ import { useLiveGame } from '../state/game';
 import { useProfile } from '../state/profile';
 import { TIME_CONTROLS, hasSavedSetup, loadSetup, saveSetup, setupBot, startBotGame, suggestedBot, type Setup } from '../state/playSetup';
 import { Segmented, Toggle } from '../components/Widgets';
+import { ScrollRow } from '../components/ScrollRow';
 import { PageHead } from '../components/ui';
 
 export function PlayPage({ initialFen }: { initialFen?: string }) {
@@ -215,7 +216,7 @@ export function PlayHub() {
           </div>
           <div className="opp-tagline">{bot.tagline}</div>
         </div>
-        <div className="opp-strip" ref={strip}>
+        <ScrollRow className="opp-strip" scrollerRef={strip} label="Bots">
           {BOTS.map((b) => (
             <button
               key={b.id}
@@ -227,7 +228,7 @@ export function PlayHub() {
               <span className="elo">{b.elo}</span>
             </button>
           ))}
-        </div>
+        </ScrollRow>
         <div className="opp-options">
           <Segmented
             value={setup.color}

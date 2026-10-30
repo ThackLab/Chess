@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppBar, SideMenu } from './components/SideMenu';
 import { navigate, useRoute } from './lib/router';
 import { loadOpeningBook } from './lib/chess/openings';
@@ -6,14 +6,7 @@ import { pruneEvals } from './lib/review/evalCache';
 import { HomePage } from './pages/Home';
 import { PlayHub, PlayPage } from './pages/Play';
 import { GamePage } from './pages/Game';
-import { ReviewPage } from './pages/Review';
-import { AnalysisPage } from './pages/Analysis';
 import { GamesPage } from './pages/Games';
-import { PracticePage } from './pages/Practice';
-import { ImportPage } from './pages/Import';
-import { SettingsPage } from './pages/Settings';
-import { AppearancePage } from './pages/Appearance';
-import { InsightsPage } from './pages/Insights';
 import { FriendBoard, FriendHome, FriendJoin } from './pages/Friend';
 import { OnlineGamePage } from './pages/Online';
 import { useOnlineSync } from './state/online';
@@ -21,14 +14,40 @@ import { useInboxSync } from './state/people';
 import { normaliseCode } from './lib/online/relay';
 import { InvitePopup } from './components/InvitePopup';
 import { OpeningDrill, OpeningsPage } from './pages/Openings';
-import { LearnPage } from './pages/Learn';
-import { LessonPage } from './pages/Lesson';
 import { PuzzlesPage } from './pages/Puzzles';
-import { PuzzleSessionPage } from './pages/PuzzleSession';
-import { RushPage } from './pages/Rush';
-import { ExamPage } from './pages/Exam';
-import { YouPage } from './pages/You';
-import { ProfilePage } from './pages/Profile';
+
+// Screens other than Home and Play load when first opened, so the app starts
+// with less to download and parse; they're fetched in the background once it's idle.
+const ReviewPage = lazy(() => import('./pages/Review').then((m) => ({ default: m.ReviewPage })));
+const AnalysisPage = lazy(() => import('./pages/Analysis').then((m) => ({ default: m.AnalysisPage })));
+const PracticePage = lazy(() => import('./pages/Practice').then((m) => ({ default: m.PracticePage })));
+const ImportPage = lazy(() => import('./pages/Import').then((m) => ({ default: m.ImportPage })));
+const SettingsPage = lazy(() => import('./pages/Settings').then((m) => ({ default: m.SettingsPage })));
+const AppearancePage = lazy(() => import('./pages/Appearance').then((m) => ({ default: m.AppearancePage })));
+const InsightsPage = lazy(() => import('./pages/Insights').then((m) => ({ default: m.InsightsPage })));
+const LearnPage = lazy(() => import('./pages/Learn').then((m) => ({ default: m.LearnPage })));
+const LessonPage = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.LessonPage })));
+const PuzzleSessionPage = lazy(() => import('./pages/PuzzleSession').then((m) => ({ default: m.PuzzleSessionPage })));
+const RushPage = lazy(() => import('./pages/Rush').then((m) => ({ default: m.RushPage })));
+const ExamPage = lazy(() => import('./pages/Exam').then((m) => ({ default: m.ExamPage })));
+const YouPage = lazy(() => import('./pages/You').then((m) => ({ default: m.YouPage })));
+const ProfilePage = lazy(() => import('./pages/Profile').then((m) => ({ default: m.ProfilePage })));
+const LATER = [
+  () => import('./pages/Review'),
+  () => import('./pages/Analysis'),
+  () => import('./pages/Practice'),
+  () => import('./pages/Import'),
+  () => import('./pages/Settings'),
+  () => import('./pages/Appearance'),
+  () => import('./pages/Insights'),
+  () => import('./pages/Learn'),
+  () => import('./pages/Lesson'),
+  () => import('./pages/PuzzleSession'),
+  () => import('./pages/Rush'),
+  () => import('./pages/Exam'),
+  () => import('./pages/You'),
+  () => import('./pages/Profile'),
+];
 
 /** Board screens take the whole phone screen (no menu bar). */
 function isFocus(parts: string[]): boolean {
@@ -56,6 +75,8 @@ export function App() {
   // A new screen closes the menu.
   useEffect(() => setMenu(false), [route.path]);
   useEffect(() => {
+    const idle = (globalThis as { requestIdleCallback?: (f: () => void) => void }).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500));
+    idle(() => LATER.forEach((load) => void load().catch(() => undefined)));
     void loadOpeningBook();
     // Old background evaluations are only kept for a month.
     setTimeout(() => void pruneEvals(), 5000);
@@ -152,7 +173,7 @@ export function App() {
     <div className={`app ${focus ? 'focus' : ''}`}>
       <main className="main" ref={main}>
         {!focus && <AppBar onMenu={() => setMenu(true)} />}
-        {page}
+        <Suspense fallback={<div className="page-loading" aria-label="Loading" />}>{page}</Suspense>
       </main>
       <SideMenu open={menu} onClose={closeMenu} path={route.path} />
       <InvitePopup />

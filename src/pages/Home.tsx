@@ -19,6 +19,7 @@ import { loadSetup, setupBot } from '../state/playSetup';
 import { useGames, userOutcome } from './Games';
 import { useOpponents, type Opponent } from '../state/opponents';
 import { Avatar } from '../components/Avatar';
+import { ScrollRow } from '../components/ScrollRow';
 import { ANDROID_URL } from '../state/friend';
 import { isAndroidBrowser, isInstalled, isIOS } from '../lib/platform';
 import { Logo } from '../components/Widgets';
@@ -134,7 +135,7 @@ export function HomePage() {
         </button>
       )}
 
-      <div className="dash-hero">
+      <ScrollRow className="dash-hero" dots>
         <button className="hero-card hero-puzzles" onClick={() => navigate('/puzzles/play')}>
           <MiniBoard fen={HERO_FEN} className="hero-art" />
           <span className="hero-title">
@@ -169,10 +170,10 @@ export function HomePage() {
           <span className="hero-sub">{learn.rushBest ? `Best ${learn.rushBest}` : '3 minutes, 3 lives'}</span>
           <span className="btn primary hero-go">Go!</span>
         </button>
-      </div>
+      </ScrollRow>
 
       <Section title="Ratings" href="#/you">
-        <div className="tile-row">
+        <ScrollRow className="tile-row">
           <a className="tile" href="#/play">
             <Bot size={34} className="ic-bot" />
             <b>{profile.rating}</b>
@@ -200,11 +201,11 @@ export function HomePage() {
               <span>Mistakes</span>
             </a>
           )}
-        </div>
+        </ScrollRow>
       </Section>
 
       <Section title="Friends" count={opponents.length} href="#/friend">
-        <div className="friend-row">
+        <ScrollRow className="friend-row">
           {opponents.slice(0, 8).map((o) => (
             <FriendCard key={o.key} o={o} />
           ))}
@@ -216,7 +217,7 @@ export function HomePage() {
             <span className="fc-sub">anyone, by link</span>
             <span className="btn fc-btn">Invite</span>
           </button>
-        </div>
+        </ScrollRow>
       </Section>
 
       <TodayPlan opponent={bot.name} games={games} />

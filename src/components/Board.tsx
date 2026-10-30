@@ -173,11 +173,15 @@ export const Board = memo(
       const col = props.orientation === 'white' ? file : 7 - file;
       const top = (props.orientation === 'white') === (promo.color === 'white');
       return {
-        left: `${col * 12.5}%`,
-        top: top ? 0 : undefined,
-        bottom: top ? undefined : 0,
-        flexDirection: top ? 'column' : 'column-reverse',
-      } as const;
+        col,
+        top,
+        style: {
+          left: `${col * 12.5}%`,
+          top: top ? 0 : undefined,
+          bottom: top ? undefined : 0,
+          flexDirection: top ? 'column' : 'column-reverse',
+        } as const,
+      };
     })();
 
     return (
@@ -186,12 +190,19 @@ export const Board = memo(
         {names && <SquareNames orientation={props.orientation} />}
         {promo && (
           <div className="promo-overlay" onClick={() => finishPromotion(null)}>
-            <div className="promo-col" style={promoStyle} onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`promo-col ${promoStyle!.top ? 'from-top' : 'from-bottom'} ${promoStyle!.col === 0 ? 'edge-left' : promoStyle!.col === 7 ? 'edge-right' : ''}`}
+              style={promoStyle!.style}
+              role="dialog"
+              aria-label="Choose a piece to promote to"
+              onClick={(e) => e.stopPropagation()}
+            >
               {PROMO.map((p) => (
                 <button key={p} className="promo-choice" onClick={() => finishPromotion(p)} aria-label={`Promote to ${ROLE[p]}`}>
                   <piece className={`${promo.color} ${ROLE[p]}`} />
                 </button>
               ))}
+              <span className="promo-label">Choose promotion</span>
             </div>
           </div>
         )}

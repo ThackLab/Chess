@@ -940,8 +940,11 @@ function Overview({
             <td className="n" style={{ fontSize: '1.1rem' }}>
               {ratingText(review, 'w')}
             </td>
-            <td className="label muted" title="Estimated playing strength in this game">
-              Game rating
+            <td
+              className="label muted"
+              title="How strong the play was in this game alone. One game can look much stronger or weaker than a player's real rating."
+            >
+              This game ≈
             </td>
             <td className="n" style={{ fontSize: '1.1rem' }}>
               {ratingText(review, 'b')}

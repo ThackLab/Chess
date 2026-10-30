@@ -362,7 +362,10 @@ export function summariseGame(r: GameReview, userColor?: Color): string {
   for (const c of sides) {
     const s = c === 'w' ? r.white : r.black;
     const ownMoves = r.moves.filter((m) => m.color === c && m.classification !== 'book').length;
-    out.push(`${name(c)} played with ${pct(s.accuracy)} accuracy${ownMoves >= 8 ? ` (performance ≈ ${s.estimatedRating})` : ''}.`);
+    // A rating from one game: say so, since one game can look far stronger or weaker than the player is.
+    out.push(
+      `${name(c)} played with ${pct(s.accuracy)} accuracy${ownMoves >= 8 ? `, at about ${s.estimatedRating} strength in this game alone` : ''}.`,
+    );
   }
   if (r.opening) {
     const lastBook = r.moves.filter((m) => m.classification === 'book').at(-1);
