@@ -125,7 +125,31 @@ There is no App Store build: on iOS the app runs as a web app. Open the deployed
     Before this model the 100 bot took a free piece only 49% of the time but found a real tactic 24% of the time (250: 54% and 31%, 500: 66% and 55%): the wrong way round for a beginner.
 
     `BOT_LADDER="250:100,500:250,850:500,1150:850;12" npx vitest run src/test/botLadder.test.ts --silent=false` plays head-to-head matches and reports the implied rating gap. Over 12–16 games each: 250 beats 100 18/24 (implied gap ~190, labelled 150), 500 beats 250 10/12 (280 vs 250), 850 beats 500 14/16 (338 vs 350) and 1150 beats 850 14/16 (338 vs 300). `BOT_CAL`, `BOT_SEE` and `BOT_DUEL` (in `src/test/`) measure blunder rates in self-play, the older hanging-piece test and each side's big mistakes.
-- **1500–3190:** the bot plays like a strong player. It asks full-strength Stockfish for its top few candidate moves, thinking for longer the higher the rating: a budget of Stockfish nodes (4,000 at 1500, 8,000 at 1800, 16,000 at 2100, 32,000 at 2400, 64,000 at 2700, 180,000 at 3150), so a bot plays the same on every device. Whole search depths were too coarse: one more ply roughly doubles the nodes and was worth 200–350 points and picks one with a chance of `exp(-loss / temperature)`, where `loss` is how much worse than its best it judges the move, in win-chance points plus a little for material, so it still finishes won games. The temperature falls from 3 at 1500 to 0.35 at 3150, and it never plays a move it judges to give up more than a limit (12 points at 1500, 1.5 at 3150; a pawn is about 9 near equality). So it never plays a move it can see loses material: its mistakes are a strong player's, missing something deeper than it calculated. (Until 1.7 these levels used Stockfish's `UCI_LimitStrength` / `UCI_Elo`, which plays a random weaker move now and then. At 1600–2200 that meant obvious blunders, and levels that lost faster than lower ones.) The settings are the `SKILLED` table in `src/lib/bots/brain.ts`, tuned with `BOT_LADDER` and `BOT_AUDIT`.
+- **1500–3190:** the bot plays like a strong player. It asks full-strength Stockfish for its top few candidate moves, thinking for longer the higher the rating, and picks one with a chance of `exp(-loss / temperature)`, where `loss` is how much worse than its best it judges the move (in win-chance points, plus a little for material so it still finishes won games). It never plays a move it judges to give up more than a limit, and always plays a forced mate it sees. So it never plays a move it can see loses material: its mistakes are a strong player's, missing something deeper than it calculated.
+  - **Settings** (the `SKILLED` table in `src/lib/bots/brain.ts`, interpolated in between): thinking time is a budget of Stockfish nodes, so a bot plays the same on every device (a 2.5 s cap protects slow phones). Whole search depths were too coarse a dial: one more ply roughly doubles the nodes and was worth 200–350 points.
+
+    | Level | Nodes | Candidates | Temperature | Most it gives up |
+    |------:|------:|---:|---:|---:|
+    | 1500 | 5,500 | 5 | 2.0 | 10 |
+    | 1800 | 16,000 | 5 | 1.4 | 7 |
+    | 2100 | 50,000 | 4 | 0.9 | 5 |
+    | 2400 | 160,000 | 4 | 0.6 | 3.5 |
+    | 2700 | 350,000 | 3 | 0.4 | 2.5 |
+    | 3150 | 900,000 | 3 | 0.2 | 1.2 |
+
+    Temperature and the limit are in win-chance points; a pawn is about 9 near equality.
+  - **Why:** until 1.7 these levels used Stockfish's `UCI_LimitStrength` / `UCI_Elo`, which plays a random weaker move now and then. At 1600–2200 that meant obvious blunders, and levels that lost faster than lower ones. The audit, before and after (takes a free piece / mate in one / finds a real tactic / saves its own piece / blunders):
+
+    | Level | `UCI_Elo` (1.6) | Now |
+    |------:|---|---|
+    | 1600 | 89 / 93 / 72 / 87 / 14% | 100 / 100 / 93 / 96 / 4% |
+    | 1800 | 94 / 91 / 74 / 86 / 15% | 99 / 100 / 97 / 97 / 3% |
+    | 2000 | 92 / 91 / 79 / 87 / 9% | 100 / 100 / 100 / 98 / 1% |
+    | 2200 | 92 / 91 / 89 / 92 / 9% | 100 / 100 / 99 / 100 / 1% |
+    | 2450 | 99 / 90 / 93 / 91 / 6% | 100 / 100 / 100 / 100 / 1% |
+
+    (1450, the top of the human model: 97 / 98 / 96 / 99 / 5%.)
+  - **Ladder** (24–32 games a pair): 1600 beats 1450 22/32 (implied gap 137, labelled 150), 1800 beats 1600 26.5/32 (273 vs 200), 2000 beats 1800 21/24 (338 vs 200), 2200 beats 2000 15.5/24 (104 vs 200), 2450 beats 2200 17/24 (154 vs 250).
 - **3200:** full-strength Stockfish.
 - Bots open from an opening book of 3,300+ named lines, so their openings vary from game to game.
 

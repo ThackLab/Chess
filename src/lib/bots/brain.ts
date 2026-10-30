@@ -86,18 +86,19 @@ export const SKILLED_MIN_ELO = 1500;
 
 /**
  * Skilled-mode settings at anchor ratings, interpolated in between: how long
- * it thinks (Stockfish nodes, interpolated on a log scale: each doubling is
- * worth roughly 300 points here), candidate moves, temperature and the most it
- * will give up (both in win-chance points; a pawn is worth about 9 near
- * equality). Tuned with botLadder so each level beats the one below by about
- * its rating gap, starting from the 1450 human-model bot.
+ * it thinks (Stockfish nodes, interpolated on a log scale), candidate moves,
+ * temperature and the most it will give up (both in win-chance points; a pawn
+ * is worth about 9 near equality). Tuned with botLadder so each level beats
+ * the one below by about its rating gap, starting from the 1450 human-model
+ * bot; at the low end the temperature matters most (0.25 less was worth about
+ * 150 points at 1600).
  */
 const SKILLED: number[][] = [
   // elo  nodes   multipv temp maxLoss
-  [1500, 5000, 5, 2.4, 10],
+  [1500, 5500, 5, 2, 10],
   [1800, 16000, 5, 1.4, 7],
   [2100, 50000, 4, 0.9, 5],
-  [2400, 140000, 4, 0.6, 3.5],
+  [2400, 160000, 4, 0.6, 3.5],
   [2700, 350000, 3, 0.4, 2.5],
   [3150, 900000, 3, 0.2, 1.2],
 ];
