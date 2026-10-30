@@ -187,7 +187,8 @@ export function GamePage() {
 
   const position = useMemo(() => {
     if (!game || !chess) return null;
-    const ply = viewPly ?? game.moves.length;
+    // A view of a move that has since been taken back is the live position.
+    const ply = viewPly !== null && viewPly < game.moves.length ? viewPly : game.moves.length;
     const c = chessOf({ startFen: game.startFen, moves: game.moves.slice(0, ply) });
     const last = ply > 0 ? game.moves[ply - 1] : undefined;
     return {
@@ -235,7 +236,7 @@ export function GamePage() {
     return (
       <div className="page empty">
         <h2>No game in progress</h2>
-        <button className="btn primary big" onClick={() => navigate('/')}>
+        <button className="btn primary big" onClick={() => navigate('/play')}>
           Choose a bot
         </button>
       </div>
@@ -269,6 +270,15 @@ export function GamePage() {
     const botCp = s ? (userColor === 'w' ? -1 : 1) * scoreToCp(s) : 0;
     if (botAcceptsDraw(botCp, game.moves.length, bot.elo)) store.getState().finish('1/2-1/2', 'agreement');
     else toast(`${bot.name} declined the draw`);
+  };
+
+  // Back to your move, on the live board (also when you were looking at an earlier move).
+  const takeBack = () => {
+    boardRef.current?.cancelPremove();
+    store.getState().takeback();
+    setHint(null);
+    setSlip(null);
+    setViewPly(null);
   };
 
   const resign = () => {
@@ -325,6 +335,7 @@ export function GamePage() {
             onMove={onMove}
             shapes={shapes}
             viewOnly={!position.live && playing}
+            backToLive={!position.live && playing ? () => setViewPly(null) : undefined}
           />
         </div>
         <PlayerBar
@@ -350,7 +361,7 @@ export function GamePage() {
               <button
                 className="btn small primary"
                 onClick={() => {
-                  store.getState().takeback();
+                  takeBack();
                   setCoach(null);
                 }}
               >
@@ -408,7 +419,7 @@ export function GamePage() {
                 </button>
               )}
               {game.options.takebacks && (
-                <button className="ctl" onClick={() => (store.getState().takeback(), setHint(null))} disabled={game.moves.length === 0}>
+                <button className="ctl" onClick={takeBack} disabled={game.moves.length === 0}>
                   <span className="ctl-ico">
                     <Undo2 size={20} />
                   </span>

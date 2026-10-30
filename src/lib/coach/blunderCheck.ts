@@ -13,6 +13,9 @@ import type { PositionEval } from '../review/types';
 const DEPTH = 11;
 /** Expected points a move may lose before the coach steps in (a clear mistake). */
 const WARN_AT = 0.15;
+/** After a move that leaves you at least this likely to win, only a drop of BIG_DROP is worth stopping you for. */
+const STILL_WINNING = 0.65;
+const BIG_DROP = 0.3;
 
 let engine: Engine | null = null;
 const seen = new Map<string, PositionEval>();
@@ -60,8 +63,11 @@ export async function checkMove(startFen: string, moves: string[], color: Color)
   if (!before || !afterEval) return null;
   const epBest = expectedFor(before.lines[0].score, color);
   const ep = expectedFor(afterEval.lines[0].score, color);
-  // Nothing to save in a position that was already lost.
+  // Nothing to save in a position that was already lost, and no need to
+  // interrupt a move that leaves you clearly winning (a quick search often
+  // undervalues won endgames) unless it gives away a big part of the lead.
   if (epBest - ep < WARN_AT || epBest < 0.2) return { warn: false, ep };
+  if (ep >= STILL_WINNING && epBest - ep < BIG_DROP) return { warn: false, ep };
   const c = new Chess(before.fen);
   const san = playUci(c, uci)?.san ?? uci;
   const text = warningText(before, afterEval, color, uci, san) || (ep < 0.3 ? 'This gives away the game.' : 'This throws away your advantage.');

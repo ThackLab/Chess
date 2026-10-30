@@ -108,9 +108,12 @@ function tokenPly(tokens: string[], i: number): number {
 }
 
 /** Performance estimates from a handful of moves are noise, so only show them for real games. */
-function ratingText(review: GameReview, c: 'w' | 'b') {
-  const n = review.moves.filter((m) => m.color === c && m.classification !== 'book').length;
-  return n >= 8 ? (c === 'w' ? review.white : review.black).estimatedRating : '–';
+function ratingText(review: GameReview, c: 'w' | 'b', isBot: boolean) {
+  // A bot's strength is its rating; a guess from one game would only confuse.
+  if (isBot) return '–';
+  const s = c === 'w' ? review.white : review.black;
+  const n = s.ratedMoves ?? review.moves.filter((m) => m.color === c && m.classification !== 'book').length;
+  return n >= 8 ? s.estimatedRating : '–';
 }
 
 export function ReviewPage({ gameId }: { gameId: string }) {
@@ -331,7 +334,7 @@ export function ReviewPage({ gameId }: { gameId: string }) {
     if (!game) return;
     await saveGame({ ...game, userColor: c, white: { ...game.white, isUser: c === 'w' }, black: { ...game.black, isUser: c === 'b' } });
     if (review) {
-      await saveReview(gameId, { ...review, summary: summariseGame(review, c) });
+      await saveReview(gameId, { ...review, summary: summariseGame(review, c, { result: game.result, termination: game.termination }) });
       await savePuzzles(puzzlesFrom(review, gameId, c));
     }
     setFocus(c);
@@ -944,7 +947,7 @@ function Overview({
           </tr>
           <tr>
             <td className="n" style={{ fontSize: '1.1rem' }}>
-              {ratingText(review, 'w')}
+              {ratingText(review, 'w', !!game.white.botId)}
             </td>
             <td
               className="label muted"
@@ -953,7 +956,7 @@ function Overview({
               This game ≈
             </td>
             <td className="n" style={{ fontSize: '1.1rem' }}>
-              {ratingText(review, 'b')}
+              {ratingText(review, 'b', !!game.black.botId)}
             </td>
           </tr>
           {SUMMARY_CLASSES.map((c) => (

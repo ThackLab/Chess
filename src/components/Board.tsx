@@ -30,6 +30,11 @@ export interface BoardProps {
   onMove?: (from: string, to: string, promotion?: PromotionPiece) => void;
   /** Called when a square is tapped (for "spot the pattern" exercises). */
   onSelect?: (square: string) => void;
+  /**
+   * While looking back through the moves of a game in progress: the board
+   * says so, and touching it calls this (to go back to the game).
+   */
+  backToLive?: () => void;
   /** Free editing (board editor). */
   free?: boolean;
   onChange?: (fen: string) => void;
@@ -188,6 +193,19 @@ export const Board = memo(
       <div className={`board-wrap theme-${resolveBoard(settings)} ${props.className ?? ''}`} data-pieces={resolvePieces(settings)}>
         <div ref={el} className="cg-host" />
         {names && <SquareNames orientation={props.orientation} />}
+        {props.backToLive && (
+          <button
+            className="back-to-live"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              props.backToLive?.();
+            }}
+            onClick={() => props.backToLive?.()}
+            aria-label="Back to the game"
+          >
+            <span className="btl-pill">Looking at an earlier move · tap to go back</span>
+          </button>
+        )}
         {promo && (
           <div className="promo-overlay" onClick={() => finishPromotion(null)}>
             <div

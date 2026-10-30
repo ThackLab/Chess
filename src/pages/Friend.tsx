@@ -217,7 +217,7 @@ export function FriendBoard({ id }: { id: string }) {
   const base: Color = g.mode === 'link' ? (g.me ?? 'w') : g.autoFlip ? turn : 'w';
   const bottom: Color = flip ? (base === 'w' ? 'b' : 'w') : base;
   const top: Color = bottom === 'w' ? 'b' : 'w';
-  const ply = viewPly ?? g.moves.length;
+  const ply = viewPly !== null && viewPly < g.moves.length ? viewPly : g.moves.length;
   const view = new Chess(g.startFen);
   for (const u of g.moves.slice(0, ply)) playUci(view, u);
   const live = ply === g.moves.length;
@@ -256,6 +256,7 @@ export function FriendBoard({ id }: { id: string }) {
             check={view.inCheck()}
             onMove={onMove}
             viewOnly={!myTurn || !live}
+            backToLive={!live && !over ? () => setViewPly(null) : undefined}
           />
         </div>
         <div className="player-bar">
@@ -322,7 +323,14 @@ export function FriendBoard({ id }: { id: string }) {
             <span className="ctl-label">Flip</span>
           </button>
           {g.mode === 'local' && !over && (
-            <button className="ctl" onClick={() => undo(id)} disabled={!g.moves.length || !!g.tc}>
+            <button
+              className="ctl"
+              onClick={() => {
+                undo(id);
+                setViewPly(null);
+              }}
+              disabled={!g.moves.length || !!g.tc}
+            >
               <span className="ctl-ico">
                 <Undo2 size={20} />
               </span>

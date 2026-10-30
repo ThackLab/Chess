@@ -132,7 +132,12 @@ export const useReviewer = create<ReviewerStore>()((set, get) => ({
           update({ partial });
         },
       });
-      const review = buildReview(input, positions, { depth, book, userColor: game.userColor });
+      const review = buildReview(input, positions, {
+        depth,
+        book,
+        userColor: game.userColor,
+        outcome: { result: game.result, termination: game.termination },
+      });
       await saveReview(gameId, review);
       if (game.userColor) await savePuzzles(puzzlesFrom(review, gameId, game.userColor));
       update({ status: 'done', done: total, partial: [] });

@@ -91,7 +91,7 @@ export function YouPage() {
           onClick={() => navigate('/games')}
         >
           <span className="rt-k">
-            <ChessKnight size={14} /> Games
+            <ChessKnight size={14} /> Vs bots
           </span>
           <span className="rt-v">
             <CountUp value={profile.rating} id="bot-rating" />

@@ -275,7 +275,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
   const base: Color = me ?? 'w';
   const bottom: Color = flip ? (base === 'w' ? 'b' : 'w') : base;
   const top: Color = bottom === 'w' ? 'b' : 'w';
-  const ply = viewPly ?? s.m.length;
+  const ply = viewPly !== null && viewPly < s.m.length ? viewPly : s.m.length;
   const view = new Chess();
   for (const u of s.m.slice(0, ply)) playUci(view, u);
   const live = ply === s.m.length;
@@ -318,6 +318,7 @@ export function OnlineGamePage({ code, autoJoin }: { code: string; autoJoin?: bo
             check={view.inCheck()}
             onMove={onMove}
             viewOnly={!myTurn || !live}
+            backToLive={!live && !over ? () => setViewPly(null) : undefined}
           />
         </div>
         <div className="player-bar">

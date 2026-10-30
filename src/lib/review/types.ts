@@ -97,6 +97,12 @@ export interface PlayerSummary {
   accuracy: number;
   acpl: number;
   estimatedRating: number;
+  /**
+   * How many of the player's own moves the estimate rests on: those played
+   * while the game was still open. Once a game is decided, nearly any move
+   * keeps it decided, so those moves would make anyone look strong.
+   */
+  ratedMoves?: number;
   counts: Record<Classification, number>;
   phases: Record<Phase, number | null>;
 }

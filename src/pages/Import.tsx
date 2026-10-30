@@ -241,7 +241,7 @@ export function ImportPage() {
       }
     }
     await refreshKnown();
-    toast(`Imported ${n} game(s)`);
+    toast(n === 1 ? 'Imported 1 game' : `Imported ${n} games`);
   };
 
   const idOf = (c: Candidate) => `imp-${c.site}-${c.key}`.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 80);
@@ -323,7 +323,7 @@ export function ImportPage() {
       {list.length > 0 && (
         <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
           <div className="row" style={{ padding: '12px 14px' }}>
-            <b>{list.length} games</b>
+            <b>{list.length === 1 ? '1 game' : `${list.length} games`}</b>
             <span className="spacer" />
             <button className="btn small" onClick={importAll}>
               Import all to library

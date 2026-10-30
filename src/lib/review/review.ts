@@ -200,7 +200,7 @@ function emptyCounts(): Record<Classification, number> {
 export function buildReview(
   game: GameInput,
   positions: PositionEval[],
-  opts: { depth: number; book?: OpeningBook | null; userColor?: Color },
+  opts: { depth: number; book?: OpeningBook | null; userColor?: Color; outcome?: Outcome },
 ): GameReview {
   const { plies, fens } = buildPlies(game);
   const book = opts.book;
@@ -307,10 +307,14 @@ export function buildReview(
       if (list.length < 2) return null;
       return list.reduce((a, m) => a + m.accuracy, 0) / list.length;
     };
+    const open = mine.filter((m) => m.classification !== 'book' && m.epBefore >= 0.1 && m.epBefore <= 0.9);
+    const openAcpl = open.length ? open.reduce((a, m) => a + m.cpLoss, 0) / open.length : acpl;
+    const openAcc = open.length ? open.reduce((a, m) => a + m.accuracy, 0) / open.length : accuracy;
     return {
       accuracy,
       acpl,
-      estimatedRating: estimateRating(acpl, accuracy, mine.length),
+      estimatedRating: estimateRating(openAcpl, openAcc, open.length),
+      ratedMoves: open.length,
       counts,
       phases: { opening: phaseAcc('opening'), middlegame: phaseAcc('middlegame'), endgame: phaseAcc('endgame') },
     };
@@ -338,7 +342,7 @@ export function buildReview(
     keyMoments,
     summary: '',
   };
-  review.summary = summariseGame(review, opts.userColor);
+  review.summary = summariseGame(review, opts.userColor, opts.outcome);
   return review;
 }
 
@@ -354,18 +358,42 @@ function moveLabel(m: ReviewedMove) {
   return `${no}${m.color === 'w' ? '.' : '...'} ${m.san}`;
 }
 
+/** How the game ended, as stored with it. */
+export interface Outcome {
+  result: string;
+  termination?: string;
+}
+
+/** One sentence on how the game ended, from the player's side. */
+function endingLine(r: GameReview, userColor: Color, o: Outcome): string {
+  const moveNo = Math.max(1, Math.ceil(r.moves.length / 2));
+  const score =
+    o.result === '1/2-1/2' ? 0.5 : o.result === '1-0' ? (userColor === 'w' ? 1 : 0) : o.result === '0-1' ? (userColor === 'b' ? 1 : 0) : null;
+  const t = o.termination ?? '';
+  if (score === null) return '';
+  if (score === 0.5) return `The game was drawn${t ? ` by ${t}` : ''} on move ${moveNo}.`;
+  if (t === 'resignation') return score ? `Your opponent resigned on move ${moveNo}.` : `You resigned on move ${moveNo}.`;
+  if (t.startsWith('timeout')) return score ? `Your opponent ran out of time on move ${moveNo}.` : `You ran out of time on move ${moveNo}.`;
+  if (t === 'checkmate') return score ? `You won by checkmate on move ${moveNo}.` : `You were checkmated on move ${moveNo}.`;
+  return score ? `You won on move ${moveNo}.` : `You lost on move ${moveNo}.`;
+}
+
 /** A short written debrief of the whole game. */
-export function summariseGame(r: GameReview, userColor?: Color): string {
+export function summariseGame(r: GameReview, userColor?: Color, outcome?: Outcome): string {
   const out: string[] = [];
+  const ending = userColor && outcome ? endingLine(r, userColor, outcome) : '';
+  if (ending) out.push(ending);
+  const lost = !!ending && !!userColor && outcome?.result === (userColor === 'w' ? '0-1' : '1-0');
   const name = (c: Color) => (userColor ? (c === userColor ? 'You' : 'Your opponent') : c === 'w' ? 'White' : 'Black');
   const sides: Color[] = userColor ? [userColor, userColor === 'w' ? 'b' : 'w'] : ['w', 'b'];
   for (const c of sides) {
     const s = c === 'w' ? r.white : r.black;
-    const ownMoves = r.moves.filter((m) => m.color === c && m.classification !== 'book').length;
-    // A rating from one game: say so, since one game can look far stronger or weaker than the player is.
-    out.push(
-      `${name(c)} played with ${pct(s.accuracy)} accuracy${ownMoves >= 8 ? `, at about ${s.estimatedRating} strength in this game alone` : ''}.`,
-    );
+    const ownMoves = s.ratedMoves ?? r.moves.filter((m) => m.color === c && m.classification !== 'book').length;
+    // A rating from one game: say so, since one game can look far stronger or
+    // weaker than the player is. With a player to talk to, only theirs: the
+    // opponent is often a bot, whose strength is its rating.
+    const estimate = ownMoves >= 8 && (!userColor || c === userColor);
+    out.push(`${name(c)} played with ${pct(s.accuracy)} accuracy${estimate ? `, at about ${s.estimatedRating} strength in this game alone` : ''}.`);
   }
   if (r.opening) {
     const lastBook = r.moves.filter((m) => m.classification === 'book').at(-1);
@@ -404,7 +432,9 @@ export function summariseGame(r: GameReview, userColor?: Color): string {
       const [strong] = ph[ph.length - 1];
       if (ph[ph.length - 1][1] - weakAcc > 8) tips.push(`your ${weak} (${pct(weakAcc)}) was weaker than your ${strong} - worth practising`);
     }
-    if (!tips.length && s.accuracy >= 85) out.push('A clean, well-played game. Keep it up!');
+    const judged = mine.filter((m) => m.classification !== 'book').length;
+    if (judged < 4) out.push('There are too few moves of your own here to say much about how you played.');
+    else if (!tips.length && s.accuracy >= 85 && !lost) out.push('A clean, well-played game. Keep it up!');
   }
   return out.join(' ');
 }
