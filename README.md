@@ -1,5 +1,7 @@
 # Grandmasters
 
+> **This project is retired.** It is no longer developed and the repository is archived (read-only). The last release, [1.8.0](https://github.com/ThackLab/Chess/releases/tag/v1.8.0), still installs on Android, and the website at https://thacklab.github.io/Chess/ still works. Everything runs on your own device, so it keeps working as it is. Thanks for playing.
+
 A free, private, chess.com-style app that runs entirely in your browser:
 
 - **Play bots from 100 to 3200 Elo.** 19 bots with personalities, or pick any rating from 100 up. The lowest ones play like real beginners: they grab what you leave hanging, but lose track of their own pieces and never see a fork coming. Includes clocks (bullet to classical), hints, takebacks, premoves, draw offers and a training mode with a live eval bar. The Play screen opens on your usual opponent, so one tap starts a game; the strip of bots underneath switches opponent.
