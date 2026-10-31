@@ -31,8 +31,8 @@ export interface BoardProps {
   /** Called when a square is tapped (for "spot the pattern" exercises). */
   onSelect?: (square: string) => void;
   /**
-   * While looking back through the moves of a game in progress: the board
-   * says so, and touching it calls this (to go back to the game).
+   * While looking back through the moves of a game in progress: touching the
+   * board calls this (to go back to the game). Nothing is drawn over it.
    */
   backToLive?: () => void;
   /** Free editing (board editor). */
@@ -202,9 +202,7 @@ export const Board = memo(
             }}
             onClick={() => props.backToLive?.()}
             aria-label="Back to the game"
-          >
-            <span className="btl-pill">Looking at an earlier move · tap to go back</span>
-          </button>
+          />
         )}
         {promo && (
           <div className="promo-overlay" onClick={() => finishPromotion(null)}>
