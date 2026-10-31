@@ -23,11 +23,11 @@
   margin-bottom: 8px;
 }
 .coach-watch .row {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 8px;
 }
 .coach-watch .input {
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
 }
 .coach-watch .faint {

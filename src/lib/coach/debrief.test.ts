@@ -3,7 +3,7 @@ import { Chess } from 'chess.js';
 import { buildReview } from '../review/review';
 import type { PositionEval } from '../review/types';
 import type { GameRecord } from '../storage/db';
-import { debriefIntro, focusHabit, habitTrend, lessonsFor, type Habit, type ReviewedGame } from './debrief';
+import { debriefIntro, focusHabit, gist, habitTrend, lessonsFor, type Habit, type ReviewedGame } from './debrief';
 
 const START = new Chess().fen();
 
@@ -67,11 +67,18 @@ const scholars = (at = 0) =>
   );
 
 describe('the coach', () => {
+  it('keeps the point of a comment, not the whole line', () => {
+    expect(gist('Your opponent wins the queen for a pawn after 2... Nxh5 3. d4 g5 4. e5 Bc6.')).toBe(
+      'Your opponent wins the queen for a pawn after 2... Nxh5.',
+    );
+    expect(gist('This allows mate: 4. Qxf7#. Defend f7 first.')).toBe('This allows mate: 4. Qxf7#.');
+  });
+
   it('opens a debrief with how it ended and where it turned', () => {
     const g = scholars();
     const intro = debriefIntro(g, lessonsFor(g));
     expect(intro.ending).toBe('You were checkmated on move 4.');
-    expect(intro.turn).toMatch(/^The game turned on 3\.\.\. Nf6\./);
+    expect(intro.turn).toMatch(/^The game turned on 3\.\.\. Nf6: /);
     expect(intro.moments).toBeGreaterThanOrEqual(1);
   });
 

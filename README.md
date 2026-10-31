@@ -4,6 +4,7 @@
 
 A free, private, chess.com-style app that runs entirely in your browser:
 
+- **Your coach** (`#/coach`, the first card on the home screen). It watches your games, here and on chess.com once it knows your username (new games are fetched whenever the app opens and reviewed in the background), and goes over each one with you: how it ended, your best moment and where the game turned, then the key moments as positions to try again with hints and explanations, then one habit to take into your next game. It keeps track of the habit that costs you the most over your last twelve games, says whether it is coming up less often, and links the puzzles and lesson that train it.
 - **Play bots from 100 to 3200 Elo.** 19 bots with personalities, or pick any rating from 100 up. The lowest ones play like real beginners: they grab what you leave hanging, but lose track of their own pieces and never see a fork coming. Includes clocks (bullet to classical), hints, takebacks, premoves, draw offers and a training mode with a live eval bar. The Play screen opens on your usual opponent, so one tap starts a game; the strip of bots underneath switches opponent.
 - **A full game review after every game (optional, on by default).** Stockfish 18 analyses every position on all your CPU cores (most of them already in the background while you play, so the review is usually ready a few seconds after the game ends), then:
   - gives each player an **accuracy** score (lichess's published formula), a **game rating** estimate and phase-by-phase ratings (opening / middlegame / endgame);

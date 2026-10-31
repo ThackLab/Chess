@@ -15,6 +15,19 @@ export interface ReviewedGame {
   color: Color;
 }
 
+/**
+ * The point of a move comment without the whole variation: "Your opponent wins
+ * the queen for a pawn after 2... Nxh5 3. d4 g5" becomes "...after 2... Nxh5."
+ */
+export function gist(comment: string): string {
+  const first = comment.split(/(?<=[a-z)#+])\.\s+(?=[A-Z])/)[0].trim();
+  const numbers = [...first.matchAll(/\b\d+\.(?:\.\.)?\s/g)];
+  const cut = numbers.length >= 2 ? first.slice(0, numbers[1].index).trim() : first;
+  return cut.replace(/[,;:]$/, '').replace(/\.*$/, '') + '.';
+}
+
+const lowerFirst = (t: string) => (/^(Your|The|This|It|A|An|There)\b/.test(t) ? t[0].toLowerCase() + t.slice(1) : t);
+
 const moveNo = (m: ReviewedMove) => `${Math.floor(m.ply / 2) + 1}${m.color === 'w' ? '.' : '...'} ${m.san}`;
 
 export function lessonsFor({ game, review, color }: ReviewedGame): GameLessons {
@@ -39,7 +52,8 @@ export function debriefIntro(g: ReviewedGame, lessons: GameLessons): Intro {
   const best = mine.filter((m) => m.classification === 'brilliant' || m.classification === 'great').sort((a, b) => b.epLoss - a.epLoss)[0];
   const worst = [...mine].sort((a, b) => b.epLoss - a.epLoss)[0];
   const good = best ? `Your best moment was ${moveNo(best)}: ${best.headline.replace(/[.!]*$/, '')}.` : lessons.strengths[0];
-  const turn = worst && worst.epLoss >= 0.15 ? `The game turned on ${moveNo(worst)}. ${worst.headline.replace(/[.!]*$/, '')}.` : undefined;
+  const turn =
+    worst && worst.epLoss >= 0.15 ? `The game turned on ${moveNo(worst)}: ${lowerFirst(gist(worst.comment) || worst.headline)}` : undefined;
   return {
     ending: endingLine(g.review, g.color, { result: g.game.result, termination: g.game.termination }) || 'Here is your game.',
     good,
