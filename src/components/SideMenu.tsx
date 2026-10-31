@@ -2,6 +2,7 @@
 // from the left with every part of the app worth going to.
 import { useEffect, type ReactNode } from 'react';
 import {
+  MessageCircleHeart,
   Palette,
   BookOpen,
   Bot,
@@ -24,6 +25,7 @@ import {
 import { Logo } from './Widgets';
 import { navigate } from '../lib/router';
 import { Avatar } from './Avatar';
+import { useToDebrief } from '../state/coach';
 import { useSettings } from '../state/settings';
 import { useProfile } from '../state/profile';
 import { liveStreak, useLearn } from '../state/learn';
@@ -90,12 +92,14 @@ function MenuBody({ path, onClose }: { path: string; onClose: () => void }) {
   const mistakes = useDueCount();
   const repertoire = useRepertoire();
   const openings = dueLines(usePackLines(), repertoire.selected, repertoire.lines);
+  const toDebrief = useToDebrief();
 
   const groups: { title: string; items: Item[] }[] = [
     {
       title: 'Play',
       items: [
         { path: '/', label: 'Home', icon: <House size={22} />, match: [] },
+        { path: '/coach', label: 'Your coach', icon: <MessageCircleHeart size={22} className="ic-learn" />, match: ['/coach'], badge: toDebrief },
         { path: '/play', label: 'Play a bot', icon: <Bot size={22} className="ic-bot" />, match: ['/play', '/game'] },
         {
           path: '/friend',

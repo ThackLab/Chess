@@ -512,8 +512,15 @@ export function GamePage() {
             )}
             {reviewJob?.status === 'done' && <ReviewTeaser gameId={game.savedId!} userColor={userColor} />}
             <div style={{ display: 'grid', gap: 8, marginTop: 18 }}>
-              <button className="btn primary big" onClick={() => game.savedId && navigate(`/review/${game.savedId}`)} disabled={!game.savedId}>
-                Game Review
+              <button
+                className="btn primary big"
+                onClick={() => game.savedId && navigate(`/review/${game.savedId}?debrief=1`)}
+                disabled={!game.savedId}
+              >
+                Go over it with your coach
+              </button>
+              <button className="btn" onClick={() => game.savedId && navigate(`/review/${game.savedId}`)} disabled={!game.savedId}>
+                Full review
               </button>
               <div className="row" style={{ justifyContent: 'center' }}>
                 <button className="btn" onClick={rematch}>

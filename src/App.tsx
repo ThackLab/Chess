@@ -11,6 +11,7 @@ import { FriendBoard, FriendHome, FriendJoin } from './pages/Friend';
 import { OnlineGamePage } from './pages/Online';
 import { useOnlineSync } from './state/online';
 import { useInboxSync } from './state/people';
+import { watchForGames } from './state/coach';
 import { normaliseCode } from './lib/online/relay';
 import { InvitePopup } from './components/InvitePopup';
 import { OpeningDrill, OpeningsPage } from './pages/Openings';
@@ -25,6 +26,7 @@ const ImportPage = lazy(() => import('./pages/Import').then((m) => ({ default: m
 const SettingsPage = lazy(() => import('./pages/Settings').then((m) => ({ default: m.SettingsPage })));
 const AppearancePage = lazy(() => import('./pages/Appearance').then((m) => ({ default: m.AppearancePage })));
 const InsightsPage = lazy(() => import('./pages/Insights').then((m) => ({ default: m.InsightsPage })));
+const CoachPage = lazy(() => import('./pages/Coach').then((m) => ({ default: m.CoachPage })));
 const LearnPage = lazy(() => import('./pages/Learn').then((m) => ({ default: m.LearnPage })));
 const LessonPage = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.LessonPage })));
 const PuzzleSessionPage = lazy(() => import('./pages/PuzzleSession').then((m) => ({ default: m.PuzzleSessionPage })));
@@ -40,6 +42,7 @@ const LATER = [
   () => import('./pages/Settings'),
   () => import('./pages/Appearance'),
   () => import('./pages/Insights'),
+  () => import('./pages/Coach'),
   () => import('./pages/Learn'),
   () => import('./pages/Lesson'),
   () => import('./pages/PuzzleSession'),
@@ -78,6 +81,8 @@ export function App() {
     const idle = (globalThis as { requestIdleCallback?: (f: () => void) => void }).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500));
     idle(() => LATER.forEach((load) => void load().catch(() => undefined)));
     void loadOpeningBook();
+    // The coach looks for new chess.com games now and whenever the app comes back.
+    watchForGames();
     // Old background evaluations are only kept for a month.
     setTimeout(() => void pruneEvals(), 5000);
   }, []);
@@ -100,7 +105,7 @@ export function App() {
       page = <GamePage />;
       break;
     case 'review':
-      page = <ReviewPage key={id} gameId={id} />;
+      page = <ReviewPage key={id} gameId={id} debrief={route.query.get('debrief') === '1'} />;
       break;
     case 'analysis':
       page = <AnalysisPage key={route.query.get('game') ?? route.query.get('fen') ?? 'board'} query={route.query} />;
@@ -137,6 +142,9 @@ export function App() {
       break;
     case 'appearance':
       page = <AppearancePage />;
+      break;
+    case 'coach':
+      page = <CoachPage />;
       break;
     case 'insights':
       page = <InsightsPage />;

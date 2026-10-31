@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Bot, Check, ChevronRight, GraduationCap, Plus, Puzzle, Share, Star, Sun, Timer, X, Zap } from 'lucide-react';
+import { Bot, Check, ChevronRight, GraduationCap, MessageCircleHeart, Plus, Puzzle, Share, Star, Sun, Timer, X, Zap } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { navigate } from '../lib/router';
 import { findBot, monogram } from '../lib/bots/bots';
@@ -19,6 +19,7 @@ import { loadSetup, setupBot } from '../state/playSetup';
 import { useGames, userOutcome } from './Games';
 import { useOpponents, type Opponent } from '../state/opponents';
 import { Avatar, BotFace } from '../components/Avatar';
+import { useGamesToDebrief } from '../state/coach';
 import { ScrollRow } from '../components/ScrollRow';
 import { ANDROID_URL } from '../state/friend';
 import { isAndroidBrowser, isInstalled, isIOS } from '../lib/platform';
@@ -136,6 +137,7 @@ export function HomePage() {
       )}
 
       <ScrollRow className="dash-hero" dots>
+        <CoachHero />
         <button className="hero-card hero-puzzles" onClick={() => navigate('/puzzles/play')}>
           <MiniBoard fen={HERO_FEN} className="hero-art" />
           <span className="hero-title">
@@ -238,6 +240,29 @@ export function HomePage() {
         </button>
       </div>
     </div>
+  );
+}
+
+/** The coach's card: the next game to go over, or that you're all caught up. */
+function CoachHero() {
+  const waiting = useGamesToDebrief();
+  const g = waiting[0];
+  const opp = g ? (g.userColor === 'w' ? g.black : g.white) : null;
+  return (
+    <button className="hero-card hero-coach" onClick={() => navigate(g ? `/review/${g.id}?debrief=1` : '/coach')}>
+      <span className="hero-emoji" aria-hidden>
+        🧑‍🏫
+      </span>
+      <span className="hero-title">
+        <MessageCircleHeart size={26} className="ic-learn" /> Your coach
+      </span>
+      <span className="hero-sub">
+        {opp
+          ? `Your game vs ${opp.name} is ready to go over${waiting.length > 1 ? ` (+${waiting.length - 1} more)` : ''}`
+          : "All caught up. Play a game and I'll go over it with you."}
+      </span>
+      <span className="btn primary hero-go">{g ? 'Debrief' : 'Open'}</span>
+    </button>
   );
 }
 

@@ -24,6 +24,8 @@ import { summariseGame } from '../lib/review/review';
 import { puzzlesFrom, useReviewer } from '../state/reviewer';
 import { findBot, monogram } from '../lib/bots/bots';
 import { AvatarFace, BotFace } from '../components/Avatar';
+import { debriefIntro } from '../lib/coach/debrief';
+import { useCoach } from '../state/coach';
 import { useSettings } from '../state/settings';
 import type { Score } from '../lib/engine/uci';
 import { CountUp, Moves, Rich, San } from '../components/Rich';
@@ -116,7 +118,7 @@ function ratingText(review: GameReview, c: 'w' | 'b', isBot: boolean) {
   return n >= 8 ? s.estimatedRating : '–';
 }
 
-export function ReviewPage({ gameId }: { gameId: string }) {
+export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: boolean }) {
   const { game, review } = useGameAndReview(gameId);
   const job = useReviewer((s) => s.jobs[gameId]);
   const [cur, setCur] = useState(-1);
@@ -126,6 +128,9 @@ export function ReviewPage({ gameId }: { gameId: string }) {
   const [retry, setRetry] = useState<RetryState | null>(null);
   const [guided, setGuided] = useState<Guided | null>(null);
   const [focus, setFocus] = useState<'w' | 'b' | null>(null);
+  /** Debrief mode (from the coach): a short talk first, then the key moments. */
+  const [intro, setIntro] = useState(!!debrief);
+  const markDebriefed = useCoach((s) => s.markDebriefed);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -140,6 +145,9 @@ export function ReviewPage({ gameId }: { gameId: string }) {
   }, [game?.userColor]);
 
   const moves = useMemo(() => review?.moves ?? [], [review]);
+  useEffect(() => {
+    if (intro && moves.length) setCur(moves.length - 1);
+  }, [intro, moves.length]);
   const m: ReviewedMove | undefined = cur >= 0 ? moves[cur] : undefined;
 
   const lessons: GameLessons | null = useMemo(() => {
@@ -178,6 +186,7 @@ export function ReviewPage({ gameId }: { gameId: string }) {
     if (!guided) return;
     if (idx >= guided.plies.length) {
       setGuided({ ...guided, done: true });
+      if (debrief) markDebriefed(gameId);
       setCur(-1);
       setRetry(null);
       setLine(null);
@@ -404,7 +413,55 @@ export function ReviewPage({ gameId }: { gameId: string }) {
 
   // ---------------------------------------------------------------- panel content
   let panel: React.ReactNode = null;
-  if (review && guided && guided.done) {
+  const side = focus ?? game.userColor;
+  if (review && intro && !guided && lessons && side) {
+    const talk = debriefIntro({ game, review, color: side }, lessons);
+    const finish = () => {
+      markDebriefed(gameId);
+      navigate('/coach');
+    };
+    panel = (
+      <div className="coach-card debrief-intro">
+        <span className="coach-step">Your coach</span>
+        <h3 className="coach-title">{talk.ending}</h3>
+        {talk.good && (
+          <p className="coach-text">
+            <Rich text={talk.good} />
+          </p>
+        )}
+        {talk.turn && (
+          <p className="coach-text">
+            <Rich text={talk.turn} />
+          </p>
+        )}
+        <p className="coach-text">
+          {talk.moments
+            ? `Let's go through the ${talk.moments === 1 ? 'moment' : `${talk.moments} moments`} that mattered most. For each one, you'll see the position and try to find a better move before I explain.`
+            : 'Nothing big went wrong in this one. Well played.'}
+        </p>
+        <div className="row">
+          {talk.moments ? (
+            <button
+              className="btn primary"
+              onClick={() => {
+                setIntro(false);
+                startGuided();
+              }}
+            >
+              Let's go <ChevronRight size={16} />
+            </button>
+          ) : (
+            <button className="btn primary" onClick={finish}>
+              Done
+            </button>
+          )}
+          <button className="btn ghost" onClick={() => (setIntro(false), go(-1))}>
+            See the full review
+          </button>
+        </div>
+      </div>
+    );
+  } else if (review && guided && guided.done) {
     const solved = Object.values(guided.results).filter((r) => r === 'first').length;
     panel = (
       <div className="lesson-done">
@@ -413,9 +470,23 @@ export function ReviewPage({ gameId }: { gameId: string }) {
           You found the better move first time in <b>{solved}</b> of <b>{guided.plies.length}</b> positions. They are saved in Practice, so they will
           come back until the ideas stick.
         </p>
+        {debrief && lessons?.lessons[0] && (
+          <div className="debrief-habit">
+            <div className="coach-label">Take this into your next game</div>
+            <b>
+              {lessons.lessons[0].icon} {lessons.lessons[0].title}
+            </b>
+            <p className="coach-text">{lessons.lessons[0].rule}</p>
+          </div>
+        )}
         {lessons && <LessonList lessons={lessons} moves={moves} onJump={(p) => (exitGuided(), go(p))} />}
         <div className="row" style={{ justifyContent: 'center', marginTop: 12 }}>
-          <button className="btn primary" onClick={exitGuided}>
+          {debrief && (
+            <button className="btn primary" onClick={() => navigate('/coach')}>
+              Back to your coach
+            </button>
+          )}
+          <button className={`btn ${debrief ? '' : 'primary'}`} onClick={exitGuided}>
             Back to the review
           </button>
           <button className="btn" onClick={() => navigate('/practice')}>
@@ -668,7 +739,7 @@ export function ReviewPage({ gameId }: { gameId: string }) {
 
           {panel}
 
-          {review && cur === -1 && !guided && (
+          {review && cur === -1 && !guided && !intro && (
             <>
               {!game.userColor && (
                 <div className="row card" style={{ marginBottom: 12, padding: 10, background: 'var(--panel-2)' }}>
@@ -687,7 +758,7 @@ export function ReviewPage({ gameId }: { gameId: string }) {
             </>
           )}
 
-          {points.length > 1 && !guided && (
+          {points.length > 1 && !guided && !intro && (
             <div style={{ marginTop: 14 }}>
               <EvalGraph points={points} current={cur + 1} onSelect={(i) => review && go(i - 1)} height={70} />
             </div>
@@ -705,7 +776,7 @@ export function ReviewPage({ gameId }: { gameId: string }) {
             </div>
           )}
 
-          {review && !guided && (
+          {review && !guided && !intro && (
             <div style={{ marginTop: 14 }}>
               <AiCoachChat key={gameId} game={game} review={review} ply={cur} />
             </div>

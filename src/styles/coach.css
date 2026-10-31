@@ -1,0 +1,169 @@
+/* The coach (pages/Coach.tsx, the debrief in pages/Review.tsx, the home card). */
+
+.hero-card.hero-coach {
+  background: linear-gradient(135deg, #4a3a8a, #2b2350);
+}
+[data-scene] .hero-card.hero-coach {
+  background: linear-gradient(135deg, rgba(86, 66, 160, 0.86), rgba(40, 32, 78, 0.86));
+}
+
+.coach-lead {
+  color: var(--text-dim);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+[data-scene] .coach-lead,
+[data-scene] .coach-empty {
+  text-shadow: 0 1px 8px var(--scrim);
+}
+.coach-watch {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+.coach-watch .row {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.coach-watch .input {
+  flex: 1;
+  min-width: 0;
+}
+.coach-watch .faint {
+  margin: 0;
+}
+.cw-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cw-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  flex: none;
+}
+.cw-body {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.cw-body span {
+  color: var(--text-dim);
+  font-size: 0.84rem;
+}
+.link-btn {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.debrief-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.debrief-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+[data-scene] .debrief-row {
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
+}
+.debrief-row .dr-av {
+  width: 36px;
+  height: 36px;
+}
+.debrief-row .dr-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.debrief-row .dr-body span {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.coach-empty {
+  margin: 0 0 12px;
+}
+.habit-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.hc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+}
+.hc-icon {
+  font-size: 1.5rem;
+}
+.hc-rule {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+.hc-trend {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.hc-trend.better {
+  color: var(--good);
+}
+.hc-trend.worse {
+  color: #e8a33d;
+}
+
+/* The debrief in the review. */
+.debrief-intro .coach-title {
+  font-size: 1.25rem;
+}
+.debrief-habit {
+  margin: 14px 0 4px;
+  padding: 14px;
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
+  text-align: left;
+}
+.debrief-habit b {
+  display: block;
+  margin: 4px 0;
+}
+.debrief-habit .coach-text {
+  margin: 0;
+}

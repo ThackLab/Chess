@@ -31,7 +31,7 @@ export function ResultChip({ g }: { g: GameRecord }) {
   return <span className={`result-chip ${o}`}>{o === 'win' ? 'W' : o === 'loss' ? 'L' : '½'}</span>;
 }
 
-function when(t: number): string {
+export function when(t: number): string {
   const d = Date.now() - t;
   if (d < 3_600_000) return `${Math.max(1, Math.round(d / 60_000))} min ago`;
   if (d < 86_400_000) return `${Math.round(d / 3_600_000)} h ago`;

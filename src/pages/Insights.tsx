@@ -1,31 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { computeInsights, type Insights, type PeriodStats, type ReviewedGame } from '../lib/insights';
-import { getReview, listGames, onDbChange } from '../lib/storage/db';
+import { computeInsights, type Insights, type PeriodStats } from '../lib/insights';
+import { useReviewedGames } from '../state/reviewedGames';
 import { navigate } from '../lib/router';
 import { findLesson } from '../lib/learn/curriculum';
 import { Meter, PageHead, SectionTitle, Sparkline } from '../components/ui';
 import { Accent, CountUp } from '../components/Rich';
 import { useLearn } from '../state/learn';
 import { useProfile } from '../state/profile';
-
-function useReviewedGames(): ReviewedGame[] | null {
-  const [list, setList] = useState<ReviewedGame[] | null>(null);
-  useEffect(() => {
-    const load = async () => {
-      const games = (await listGames()).filter((g) => g.userColor && g.reviewedAt);
-      const out: ReviewedGame[] = [];
-      for (const game of games) {
-        const review = await getReview(game.id);
-        if (review) out.push({ game, review, color: game.userColor! });
-      }
-      setList(out);
-    };
-    void load();
-    return onDbChange(() => void load());
-  }, []);
-  return list;
-}
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 

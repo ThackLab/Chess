@@ -365,7 +365,7 @@ export interface Outcome {
 }
 
 /** One sentence on how the game ended, from the player's side. */
-function endingLine(r: GameReview, userColor: Color, o: Outcome): string {
+export function endingLine(r: GameReview, userColor: Color, o: Outcome): string {
   const moveNo = Math.max(1, Math.ceil(r.moves.length / 2));
   const score =
     o.result === '1/2-1/2' ? 0.5 : o.result === '1-0' ? (userColor === 'w' ? 1 : 0) : o.result === '0-1' ? (userColor === 'b' ? 1 : 0) : null;
