@@ -16,7 +16,8 @@ import { evalScore } from '../lib/review/classify';
 import { gameLessons, moveLesson, type GameLessons } from '../lib/review/lessons';
 import { hintsFor, refutationText } from '../lib/review/hints';
 import { LESSON_FOR_THEME, findLesson } from '../lib/learn/curriculum';
-import { bestIdeaSentence } from '../lib/review/explain';
+import { bestIdeaSentence, standing } from '../lib/review/explain';
+import { captionMove, momentVariations, type Variation } from '../lib/coach/story';
 import { CLASS_META, CLASS_ORDER, type Classification, type GameReview, type Phase, type ReviewedMove } from '../lib/review/types';
 import { expectedFor, scoreToExpected } from '../lib/review/winprob';
 import { getGame, getReview, onDbChange, saveGame, savePuzzles, saveReview, type GameRecord } from '../lib/storage/db';
@@ -44,6 +45,21 @@ type RetryState = {
   hints?: number;
 };
 type Guided = { plies: number[]; idx: number; results: Record<number, 'first' | 'later' | 'revealed'>; done: boolean };
+
+/**
+ * "Show me" at one of your moves: watch the lines (what happened, the better
+ * move, other ideas) one tap at a time, then play the better line yourself,
+ * then try anything and see what the engine answers.
+ */
+interface Shop {
+  ply: number;
+  vars: Variation[];
+  v: number;
+  idx: number;
+  mode: 'watch' | 'yourturn' | 'tinker';
+  turn: { moves: string[]; misses: number; done: boolean; note?: string };
+  tinker: { moves: string[]; notes: string[]; thinking: boolean };
+}
 
 function useGameAndReview(gameId: string) {
   const [game, setGame] = useState<GameRecord | null | undefined>(undefined);
@@ -127,6 +143,11 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
   const [line, setLine] = useState<{ base: string; moves: string[]; idx: number } | null>(null);
   const [retry, setRetry] = useState<RetryState | null>(null);
   const [guided, setGuided] = useState<Guided | null>(null);
+  const [shop, setShop] = useState<Shop | null>(null);
+  useEffect(() => {
+    if (shop?.mode === 'watch' && shop.idx)
+      bodyRef.current?.querySelector('.shop-steps li.now')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [shop?.idx, shop?.mode, shop?.v]);
   const [focus, setFocus] = useState<'w' | 'b' | null>(null);
   /** Debrief mode (from the coach): a short talk first, then the key moments. */
   const [intro, setIntro] = useState(!!debrief);
@@ -172,13 +193,32 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
     [moves.length],
   );
 
+  const openShop = (ply: number): Shop | null => {
+    if (!review) return null;
+    const vars = momentVariations(review, ply, review.moves[ply].color);
+    if (!vars.length) return null;
+    return { ply, vars, v: 0, idx: 0, mode: 'watch', turn: { moves: [], misses: 0, done: false }, tinker: { moves: [], notes: [], thinking: false } };
+  };
+  const showMe = (ply: number) => {
+    const next = openShop(ply);
+    if (!next) return;
+    setCur(ply);
+    setLine(null);
+    setRetry(null);
+    setShop(next);
+    bodyRef.current?.scrollTo({ top: 0 });
+  };
+
   const startGuided = () => {
     if (!lessons?.practice.length) return;
     const plies = lessons.practice;
     setGuided({ plies, idx: 0, results: {}, done: false });
     setCur(plies[0]);
     setLine(null);
-    setRetry({ state: 'try', attempts: 0 });
+    if (debrief) {
+      setRetry(null);
+      setShop(openShop(plies[0]));
+    } else setRetry({ state: 'try', attempts: 0 });
     bodyRef.current?.scrollTo({ top: 0 });
   };
 
@@ -189,25 +229,33 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
       if (debrief) markDebriefed(gameId);
       setCur(-1);
       setRetry(null);
+      setShop(null);
       setLine(null);
       return;
     }
     setGuided({ ...guided, idx });
     setCur(guided.plies[idx]);
     setLine(null);
-    setRetry({ state: 'try', attempts: 0 });
+    if (debrief) {
+      setRetry(null);
+      setShop(openShop(guided.plies[idx]));
+    } else setRetry({ state: 'try', attempts: 0 });
     bodyRef.current?.scrollTo({ top: 0 });
   };
 
   const exitGuided = () => {
     setGuided(null);
     setRetry(null);
+    setShop(null);
   };
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
-      if (e.key === 'ArrowRight') {
+      if (shop?.mode === 'watch' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+        const n = shop.vars[shop.v].story.steps.length;
+        setShop({ ...shop, idx: Math.max(0, Math.min(n, shop.idx + (e.key === 'ArrowRight' ? 1 : -1))) });
+      } else if (e.key === 'ArrowRight') {
         if (line) setLine((l) => (l ? { ...l, idx: Math.min(l.moves.length, l.idx + 1) } : l));
         else if (!guided) go(cur + 1);
       } else if (e.key === 'ArrowLeft') {
@@ -219,7 +267,7 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
     };
     window.addEventListener('keydown', on);
     return () => window.removeEventListener('keydown', on);
-  }, [line, guided, cur, go]);
+  }, [line, guided, cur, go, shop]);
 
   const points: GraphPoint[] = useMemo(() => {
     if (review)
@@ -237,6 +285,26 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
   // ---------------------------------------------------------------- board state
   const board = useMemo(() => {
     if (!game) return null;
+    if (shop && review) {
+      const base = review.moves[shop.ply].fenBefore;
+      const you = review.moves[shop.ply].color;
+      const played =
+        shop.mode === 'watch'
+          ? shop.vars[shop.v].story.steps.slice(0, shop.idx).map((x) => x.uci)
+          : shop.mode === 'yourturn'
+            ? shop.turn.moves
+            : shop.tinker.moves;
+      const c = new Chess(base);
+      let lastMove: [string, string] | undefined =
+        shop.ply > 0 ? [moves[shop.ply - 1].uci.slice(0, 2), moves[shop.ply - 1].uci.slice(2, 4)] : undefined;
+      for (const u of played) {
+        playUci(c, u);
+        lastMove = [u.slice(0, 2), u.slice(2, 4)];
+      }
+      const movable =
+        c.turn() === you && !c.isGameOver() && ((shop.mode === 'yourturn' && !shop.turn.done) || (shop.mode === 'tinker' && !shop.tinker.thinking));
+      return { fen: c.fen(), lastMove, check: c.inCheck(), dests: movable ? legalDests(c) : undefined, movable };
+    }
     if (retry && m) {
       const c = new Chess(m.fenBefore);
       let fen = m.fenBefore;
@@ -263,9 +331,21 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
     const fen = m ? m.fenAfter : game.startFen;
     const c = new Chess(fen);
     return { fen, lastMove: m ? ([m.uci.slice(0, 2), m.uci.slice(2, 4)] as [string, string]) : undefined, check: c.inCheck(), movable: false };
-  }, [game, m, cur, moves, line, retry]);
+  }, [game, m, cur, moves, line, retry, shop, review]);
 
   const shapes = useMemo<DrawShape[]>(() => {
+    if (shop) {
+      if (shop.mode === 'watch') {
+        const st = shop.vars[shop.v].story.steps[shop.idx - 1];
+        return st ? [{ orig: st.uci.slice(0, 2) as Key, dest: st.uci.slice(2, 4) as Key, brush: st.mine ? 'green' : 'red' }] : [];
+      }
+      if (shop.mode === 'yourturn' && shop.turn.misses >= 2 && !shop.turn.done) {
+        const want = shop.vars.find((x) => x.key === 'best')?.story.steps[shop.turn.moves.length]?.uci;
+        return want ? [{ orig: want.slice(0, 2) as Key, dest: want.slice(2, 4) as Key, brush: 'blue' }] : [];
+      }
+      const last = shop.mode === 'tinker' ? shop.tinker.moves.at(-1) : undefined;
+      return last && shop.tinker.moves.length % 2 === 0 ? [{ orig: last.slice(0, 2) as Key, dest: last.slice(2, 4) as Key, brush: 'red' }] : [];
+    }
     if (!m || line) return [];
     if (retry) {
       // While solving, show nothing; once solved, mark the winning move.
@@ -282,7 +362,7 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
       if (reply) out.push({ orig: reply.slice(0, 2) as Key, dest: reply.slice(2, 4) as Key, brush: 'red', modifiers: { lineWidth: 8 } });
     }
     return out;
-  }, [m, showBest, retry, line, review, cur]);
+  }, [m, showBest, retry, line, review, cur, shop]);
 
   const hints = useMemo(() => {
     if (!m?.bestMove || !m.bestSan) return null;
@@ -290,17 +370,99 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
   }, [m, cur, moves]);
 
   const highlights = useMemo(() => {
+    if (shop?.mode === 'watch') {
+      const st = shop.vars[shop.v].story.steps[shop.idx - 1];
+      const h = new Map<string, string>();
+      for (const sq of st?.squares ?? []) if (sq !== st.uci.slice(2, 4)) h.set(sq, 'hl-key');
+      return h.size ? h : undefined;
+    }
+    if (shop) return undefined;
     if (m && retry && retry.state === 'try' && (retry.hints ?? 0) >= 2 && hints) return new Map([[hints.square, 'hl-key']]);
     if (!m || retry || line) return undefined;
     const h = new Map<string, string>();
     for (const sq of m.squares ?? []) if (sq !== m.uci.slice(2, 4)) h.set(sq, 'hl-key');
     return h.size ? h : undefined;
-  }, [m, retry, line, hints]);
+  }, [m, retry, line, hints, shop]);
 
   const currentScore: Score | undefined = useMemo(() => {
-    if (!review || line || retry) return undefined;
+    if (!review || line || retry || shop) return undefined;
     return evalScore(review.positions[cur + 1]);
-  }, [review, cur, line, retry]);
+  }, [review, cur, line, retry, shop]);
+
+  // ---------------------------------------------------------------- show me: your turn and tinker
+  const onShopMove = async (from: string, to: string, promotion?: PromotionPiece) => {
+    if (!shop || !review) return;
+    const base = review.moves[shop.ply].fenBefore;
+    const you = review.moves[shop.ply].color;
+    if (shop.mode === 'yourturn') {
+      const c = new Chess(base);
+      for (const u of shop.turn.moves) playUci(c, u);
+      const mv = playUci(c, from + to + (promotion ?? ''));
+      if (!mv) return;
+      const uci = moveToUci(mv);
+      const line = shop.vars.find((x) => x.key === 'best')?.story.steps.map((x) => x.uci) ?? [];
+      const want = line[shop.turn.moves.length];
+      if (uci !== want) {
+        playSound('illegal');
+        setShop({
+          ...shop,
+          turn: {
+            ...shop.turn,
+            misses: shop.turn.misses + 1,
+            note: shop.turn.misses >= 1 ? 'Follow the blue arrow.' : 'Not that one. Think back to the line you just watched.',
+          },
+        });
+        return;
+      }
+      playSound(soundForSan(mv.san));
+      const movesNow = [...shop.turn.moves, uci];
+      const reply = line[movesNow.length];
+      // Done after your third move of the line, or when the line runs out.
+      const yours = movesNow.filter((_, i) => i % 2 === 0).length;
+      const done = !reply || yours >= 3 || !line[movesNow.length + 1];
+      const finished = (ms: string[]) => {
+        setShop((cur) => (cur ? { ...cur, turn: { moves: ms, misses: cur.turn.misses, done: true, note: undefined } } : cur));
+        if (guided && guided.results[shop.ply] === undefined)
+          setGuided((g) => (g ? { ...g, results: { ...g.results, [shop.ply]: shop.turn.misses ? 'later' : 'first' } } : g));
+      };
+      setShop({ ...shop, turn: { ...shop.turn, moves: movesNow, note: undefined } });
+      if (reply) {
+        setTimeout(() => {
+          playSound('move');
+          const ms = [...movesNow, reply];
+          if (done) finished(ms);
+          else setShop((cur) => (cur ? { ...cur, turn: { ...cur.turn, moves: ms } } : cur));
+        }, 500);
+      } else finished(movesNow);
+      return;
+    }
+    if (shop.mode === 'tinker') {
+      const c = new Chess(base);
+      for (const u of shop.tinker.moves) playUci(c, u);
+      const fen = c.fen();
+      const mv = playUci(c, from + to + (promotion ?? ''));
+      if (!mv) return;
+      const uci = moveToUci(mv);
+      playSound(soundForSan(mv.san));
+      const mine = captionMove(fen, uci, you).caption;
+      const movesNow = [...shop.tinker.moves, uci];
+      if (c.isGameOver()) {
+        setShop({ ...shop, tinker: { moves: movesNow, notes: [...shop.tinker.notes, mine], thinking: false } });
+        return;
+      }
+      setShop({ ...shop, tinker: { moves: movesNow, notes: [...shop.tinker.notes, mine], thinking: true } });
+      const res = await getAnalysisEngine().analyse({ fen: base, moves: movesNow, limits: { depth: 12, movetime: 1500 }, multipv: 1 });
+      const reply = res.bestmove;
+      const score = res.lines[0]?.score;
+      if (!reply) return setShop((cur) => (cur ? { ...cur, tinker: { ...cur.tinker, thinking: false } } : cur));
+      const theirs = captionMove(c.fen(), reply, you).caption;
+      const how = score ? ` Now you're ${standing(expectedFor(score, you))}.` : '';
+      playSound('move');
+      setShop((cur) =>
+        cur ? { ...cur, tinker: { moves: [...movesNow, reply], notes: [...cur.tinker.notes, `${theirs}${how}`], thinking: false } } : cur,
+      );
+    }
+  };
 
   // ---------------------------------------------------------------- retry
   const onRetryMove = async (from: string, to: string, promotion?: PromotionPiece) => {
@@ -436,7 +598,7 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
         )}
         <p className="coach-text">
           {talk.moments
-            ? `Let's go through the ${talk.moments === 1 ? 'moment' : `${talk.moments} moments`} that mattered most. For each one, you'll see the position and try to find a better move before I explain.`
+            ? `Let's go through the ${talk.moments === 1 ? 'moment' : `${talk.moments} moments`} that mattered most. For each one I'll show you what happened, then the better move and a couple of other ideas, one tap at a time. Then you play it yourself, and you can try anything you like.`
             : 'Nothing big went wrong in this one. Well played.'}
         </p>
         <div className="row">
@@ -458,6 +620,184 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
           <button className="btn ghost" onClick={() => (setIntro(false), go(-1))}>
             See the full review
           </button>
+        </div>
+      </div>
+    );
+  } else if (review && shop) {
+    const sm = review.moves[shop.ply];
+    const v = shop.vars[shop.v];
+    const steps = v?.story.steps ?? [];
+    const why = moveLesson(review, shop.ply);
+    const tabs: { label: string; on: boolean; go: () => void }[] = [
+      ...shop.vars.map((x, i) => ({
+        label: x.key === 'alt' ? `Try ${x.san}` : x.label,
+        on: shop.mode === 'watch' && shop.v === i,
+        go: () => setShop({ ...shop, mode: 'watch', v: i, idx: 0 }),
+      })),
+      {
+        label: 'Your turn',
+        on: shop.mode === 'yourturn',
+        go: () => setShop({ ...shop, mode: 'yourturn', turn: { moves: [], misses: 0, done: false } }),
+      },
+      {
+        label: 'Tinker',
+        on: shop.mode === 'tinker',
+        go: () => setShop({ ...shop, mode: 'tinker', tinker: { moves: [], notes: [], thinking: false } }),
+      },
+    ];
+    const nextTab = tabs.findIndex((t) => t.on) + 1;
+    const step = guided ? `Moment ${guided.idx + 1} of ${guided.plies.length} · ` : '';
+    panel = (
+      <div className="coach-card shop">
+        <span className="coach-step">
+          {step}
+          <MoveName m={sm} />
+        </span>
+        <div className="shop-tabs" role="tablist">
+          {tabs.map((t) => (
+            <button key={t.label} role="tab" aria-selected={t.on} className={t.on ? 'on' : ''} onClick={t.go}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {shop.mode === 'watch' && v && (
+          <>
+            <h3 className="coach-title">
+              {v.label}: <San san={v.san} chip />
+              {v.verdict && <span className="shop-verdict"> {v.verdict}</span>}
+            </h3>
+            {shop.idx === 0 && (
+              <p className="coach-text faint">
+                {v.key === 'played'
+                  ? 'This is the position before your move. Tap ▶ to play it, then see what they do.'
+                  : 'Same position. Tap ▶ to play this move and follow it through.'}
+              </p>
+            )}
+            <div className="shop-controls">
+              <button
+                className="btn small"
+                onClick={() => setShop({ ...shop, idx: Math.max(0, shop.idx - 1) })}
+                disabled={shop.idx === 0}
+                aria-label="Back a move"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className="faint">
+                {shop.idx} of {steps.length}
+              </span>
+              {shop.idx < steps.length ? (
+                <button className="btn small primary" onClick={() => setShop({ ...shop, idx: shop.idx + 1 })} aria-label="Next move">
+                  <ChevronRight size={18} />
+                </button>
+              ) : (
+                tabs[nextTab] && (
+                  <button className="btn small primary" onClick={tabs[nextTab].go}>
+                    {tabs[nextTab].label} <ChevronRight size={14} />
+                  </button>
+                )
+              )}
+            </div>
+            <ol className="shop-steps">
+              {steps.slice(0, shop.idx).map((x, i) => (
+                <li key={i} className={`${x.mine ? 'mine' : 'theirs'} ${i === shop.idx - 1 ? 'now' : ''}`}>
+                  <San san={x.san} chip /> <Rich text={x.caption} />
+                </li>
+              ))}
+            </ol>
+            {shop.idx === steps.length && (
+              <div className="shop-end">
+                <p className="shop-outcome">{v.story.outcome}</p>
+                {v.key === 'played' && why && (
+                  <p className="coach-text">
+                    <b>Why it matters:</b> {why.info.rule}
+                  </p>
+                )}
+                {v.key === 'best' && (
+                  <p className="coach-text">
+                    <Rich text={bestIdeaSentence(review.positions[shop.ply], sm.color, sm.epBefore, recaptureAt(moves, shop.ply))} />
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {shop.mode === 'yourturn' && (
+          <>
+            <h3 className="coach-title">Your turn: play it yourself</h3>
+            <p className="coach-text">
+              Same position. Play the better line you just watched, starting with{' '}
+              <San san={shop.vars.find((x) => x.key === 'best')?.san ?? ''} chip />. I'll play their replies.
+            </p>
+            {shop.turn.note && <p className="coach-text shop-note">{shop.turn.note}</p>}
+            {shop.turn.done ? (
+              <>
+                <p className="shop-outcome good">That's it. You've played it with your own hands now.</p>
+                <div className="row">
+                  <button className="btn small" onClick={() => setShop({ ...shop, turn: { moves: [], misses: shop.turn.misses, done: false } })}>
+                    <RotateCcw size={14} /> Again
+                  </button>
+                  <button className="btn small primary" onClick={tabs[tabs.length - 1].go}>
+                    Tinker <ChevronRight size={14} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button className="btn small" onClick={() => setShop({ ...shop, turn: { moves: [], misses: shop.turn.misses, done: false } })}>
+                <RotateCcw size={14} /> Start again
+              </button>
+            )}
+          </>
+        )}
+
+        {shop.mode === 'tinker' && (
+          <>
+            <h3 className="coach-title">Tinker</h3>
+            <p className="coach-text">Try any move you like. I'll answer the way a strong player would and tell you what each move does.</p>
+            <ol className="shop-steps">
+              {shop.tinker.notes.map((n, i) => (
+                <li key={i} className={i % 2 === 0 ? 'mine' : 'theirs'}>
+                  <Rich text={n} />
+                </li>
+              ))}
+            </ol>
+            {shop.tinker.thinking && <p className="coach-text faint">Thinking…</p>}
+            <div className="row">
+              <button
+                className="btn small"
+                disabled={!shop.tinker.moves.length || shop.tinker.thinking}
+                onClick={() => {
+                  const back = shop.tinker.moves.length % 2 === 0 ? 2 : 1;
+                  setShop({
+                    ...shop,
+                    tinker: { moves: shop.tinker.moves.slice(0, -back), notes: shop.tinker.notes.slice(0, -back), thinking: false },
+                  });
+                }}
+              >
+                Undo
+              </button>
+              <button
+                className="btn small"
+                disabled={shop.tinker.thinking}
+                onClick={() => setShop({ ...shop, tinker: { moves: [], notes: [], thinking: false } })}
+              >
+                <RotateCcw size={14} /> Reset
+              </button>
+            </div>
+          </>
+        )}
+
+        <div className="row shop-foot">
+          {guided ? (
+            <button className="btn primary" onClick={() => guidedStep(guided.idx + 1)}>
+              {guided.idx + 1 < guided.plies.length ? 'Next moment' : 'Finish'} <ChevronRight size={14} />
+            </button>
+          ) : (
+            <button className="btn" onClick={() => setShop(null)}>
+              Close
+            </button>
+          )}
         </div>
       </div>
     );
@@ -619,6 +959,11 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
         )}
         {lesson && <LessonBox title={lesson.info.title} rule={lesson.info.rule} theme={lesson.theme} />}
         <div className="row" style={{ marginTop: 4 }}>
+          {!['book', 'forced'].includes(m.classification) && (
+            <button className="btn small primary" onClick={() => showMe(cur)}>
+              <Play size={14} /> Show me
+            </button>
+          )}
           {retryable && (
             <button className="btn small primary" onClick={() => setRetry({ state: 'try', attempts: 0 })}>
               <RotateCcw size={14} /> Retry
@@ -673,7 +1018,7 @@ export function ReviewPage({ gameId, debrief }: { gameId: string; debrief?: bool
               highlights={highlights}
               movableColor={board.movable && m ? (m.color === 'w' ? 'white' : 'black') : undefined}
               dests={board.dests}
-              onMove={onRetryMove}
+              onMove={shop ? onShopMove : onRetryMove}
               viewOnly={!board.movable}
             />
           )}
