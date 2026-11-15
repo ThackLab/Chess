@@ -7,6 +7,12 @@ interface AndroidBridge {
   copyText(text: string): void;
   /** Vibrates in a pattern of on/off milliseconds, comma-separated (app version 1.1 and later). */
   vibrate?(pattern: string): void;
+  /**
+   * Says text out loud with Android's text-to-speech (app version 1.11 and later), since the
+   * WebView has no speech synthesis of its own. Reports back through window.__grandmastersSpeech.
+   */
+  speak?(text: string, rate: number, pitch: number, id: string): void;
+  stopSpeaking?(): void;
 }
 
 const bridge = (globalThis as { GrandmastersAndroid?: AndroidBridge }).GrandmastersAndroid;
@@ -24,6 +30,15 @@ export function vibrate(pattern: number[]) {
     // Some browsers refuse without a recent tap; that's fine.
   }
 }
+
+/** The Android app's text-to-speech, when this build of the app has it. */
+export const nativeSpeech =
+  bridge && typeof bridge.speak === 'function'
+    ? {
+        speak: (text: string, rate: number, pitch: number, id: string) => bridge.speak!(text, rate, pitch, id),
+        stop: () => bridge.stopSpeaking?.(),
+      }
+    : null;
 
 export const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 

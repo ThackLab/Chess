@@ -34,6 +34,11 @@ const RushPage = lazy(() => import('./pages/Rush').then((m) => ({ default: m.Rus
 const ExamPage = lazy(() => import('./pages/Exam').then((m) => ({ default: m.ExamPage })));
 const YouPage = lazy(() => import('./pages/You').then((m) => ({ default: m.YouPage })));
 const ProfilePage = lazy(() => import('./pages/Profile').then((m) => ({ default: m.ProfilePage })));
+const LondonHome = lazy(() => import('./pages/London').then((m) => ({ default: m.LondonHome })));
+const LondonLesson = lazy(() => import('./pages/London').then((m) => ({ default: m.LondonLesson })));
+const LondonDrill = lazy(() => import('./pages/London').then((m) => ({ default: m.LondonDrill })));
+const LondonTraps = lazy(() => import('./pages/London').then((m) => ({ default: m.LondonTraps })));
+const LondonPlay = lazy(() => import('./pages/LondonPlay').then((m) => ({ default: m.LondonPlay })));
 const LATER = [
   () => import('./pages/Review'),
   () => import('./pages/Analysis'),
@@ -50,6 +55,8 @@ const LATER = [
   () => import('./pages/Exam'),
   () => import('./pages/You'),
   () => import('./pages/Profile'),
+  () => import('./pages/London'),
+  () => import('./pages/LondonPlay'),
 ];
 
 /** Board screens take the whole phone screen (no menu bar). */
@@ -61,6 +68,7 @@ function isFocus(parts: string[]): boolean {
   if (root === 'openings' && id) return true;
   if (root === 'learn' && id) return true;
   if (root === 'puzzles' && id) return true;
+  if (root === 'london' && id && !(id === 'traps' && !parts[2])) return true;
   return false;
 }
 
@@ -152,6 +160,22 @@ export function App() {
     case 'openings':
       page = id ? <OpeningDrill key={id} id={id} /> : <OpeningsPage />;
       break;
+    case 'london': {
+      const sub = route.parts[2];
+      page =
+        id === 'line' && sub ? (
+          <LondonLesson key={sub} id={sub} startMode={route.query.get('mode')} />
+        ) : id === 'drill' ? (
+          <LondonDrill />
+        ) : id === 'traps' ? (
+          <LondonTraps key={sub ?? 'list'} id={sub} />
+        ) : id === 'play' ? (
+          <LondonPlay />
+        ) : (
+          <LondonHome />
+        );
+      break;
+    }
     case 'online':
       page = id ? <OnlineGamePage key={id} code={id} autoJoin={route.query.get('accept') === '1'} /> : <FriendHome />;
       break;

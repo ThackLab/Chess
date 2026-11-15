@@ -1,4 +1,4 @@
-import { BookOpen, Check, Compass, Crown, Lock, Map as MapIcon, Trophy } from 'lucide-react';
+import { BookOpen, Check, Compass, Crown, Lock, Map as MapIcon, Speech, Trophy } from 'lucide-react';
 import { findLesson } from '../lib/learn/curriculum';
 import { COURSES, type Course } from '../lib/learn/courses';
 import {
@@ -219,6 +219,12 @@ export function LearnPage() {
       )}
 
       <div className="list" style={{ marginTop: 16 }}>
+        <ListRow
+          icon={<Speech size={20} />}
+          title="London coach"
+          sub="A talking coach teaches you every London line, drills you and plays you"
+          href="/london"
+        />
         <ListRow
           icon={<BookOpen size={20} />}
           title="Opening repertoire"
