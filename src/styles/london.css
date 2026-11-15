@@ -1,0 +1,256 @@
+/* The London course and the talking coach (pages/London.tsx, pages/LondonPlay.tsx, components/CoachBubble.tsx). */
+
+.hero-card.hero-london {
+  background: linear-gradient(135deg, #8a4a2e, #4d2a1c);
+}
+[data-scene] .hero-card.hero-london {
+  background: linear-gradient(135deg, rgba(150, 82, 52, 0.86), rgba(78, 42, 28, 0.86));
+}
+
+/* ------------------------------------------------------------ the bubble */
+
+.coach-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+}
+.coach-bubble.compact {
+  padding: 8px 10px;
+  gap: 10px;
+}
+.coach-face {
+  position: relative;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-3);
+}
+.coach-face img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+.coach-face::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--good);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.coach-face.talking::after {
+  opacity: 1;
+  transform: scale(1);
+  animation: coach-talk 0.9s ease-in-out infinite;
+}
+@keyframes coach-talk {
+  50% {
+    transform: scale(1.08);
+    opacity: 0.55;
+  }
+}
+.cb-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.cb-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+.cb-head b {
+  font-weight: 600;
+}
+.cb-tag {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text-dim);
+}
+.cb-btn {
+  width: 32px;
+  height: 32px;
+  color: var(--text-dim);
+}
+.cb-text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--text);
+  animation: rise 0.2s ease;
+}
+.cb-thinking {
+  display: flex;
+  gap: 5px;
+  padding: 8px 0;
+}
+.cb-thinking span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  animation: coach-dots 1s ease-in-out infinite;
+}
+.cb-thinking span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.cb-thinking span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes coach-dots {
+  50% {
+    opacity: 0.25;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-face.talking::after,
+  .cb-thinking span,
+  .cb-text {
+    animation: none;
+  }
+}
+[data-motion='reduce'] .coach-face.talking::after,
+[data-motion='reduce'] .cb-thinking span,
+[data-motion='reduce'] .cb-text {
+  animation: none;
+}
+
+/* ---------------------------------------------------------------- the hub */
+
+.london-hero {
+  display: grid;
+  gap: 14px;
+}
+.lh-level {
+  display: grid;
+  gap: 8px;
+}
+.lh-level .faint {
+  margin: 0;
+  font-size: 0.84rem;
+}
+.london-above {
+  opacity: 0.72;
+}
+.london-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--text-faint);
+}
+.list-row .lr-ico.good {
+  color: var(--good);
+}
+.persona-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.persona-card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  font: inherit;
+}
+.persona-card.on {
+  border-color: var(--good);
+  background: var(--good-soft);
+}
+.persona-card img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.persona-card span {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+.london-settings {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px;
+}
+.london-settings .faint {
+  margin: 0;
+  font-size: 0.86rem;
+}
+.range-row {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+.range-row input[type='range'] {
+  width: 100%;
+}
+
+/* ---------------------------------------------------------- board screens */
+
+.london-screen .panel-body {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+.london-rule,
+.london-result,
+.london-warn,
+.london-setup {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  animation: rise 0.2s ease;
+}
+.london-result.good {
+  border-color: var(--good);
+  background: var(--good-soft);
+}
+.london-warn {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+}
+.london-warn .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.london-setup .faint {
+  margin: 0;
+  font-size: 0.82rem;
+}
+.london-setup .segmented {
+  overflow-x: auto;
+}
+.london-aka {
+  margin: 0;
+  font-size: 0.8rem;
+}
+cg-board square.london-danger {
+  background: radial-gradient(circle, rgba(255, 70, 60, 0.55) 0%, rgba(255, 70, 60, 0.18) 70%, transparent 72%);
+}

@@ -15,6 +15,7 @@ import {
   Microscope,
   Puzzle,
   Settings,
+  Speech,
   Target,
   TrendingUp,
   UserRound,
@@ -33,6 +34,7 @@ import { useOpponents } from '../state/opponents';
 import { useRepertoire } from '../state/repertoire';
 import { useDueCount } from '../pages/Puzzles';
 import { dueLines, usePackLines } from '../pages/Openings';
+import { useLondon } from '../state/london';
 
 interface Item {
   path: string;
@@ -93,6 +95,9 @@ function MenuBody({ path, onClose }: { path: string; onClose: () => void }) {
   const repertoire = useRepertoire();
   const openings = dueLines(usePackLines(), repertoire.selected, repertoire.lines);
   const toDebrief = useToDebrief();
+  // London lines you've started that are due again.
+  const londonLines = useLondon((s) => s.lines);
+  const london = Object.values(londonLines).filter((p) => p.due <= Date.now()).length;
 
   const groups: { title: string; items: Item[] }[] = [
     {
@@ -116,6 +121,7 @@ function MenuBody({ path, onClose }: { path: string; onClose: () => void }) {
         { path: '/puzzles', label: 'Puzzles', icon: <Puzzle size={22} className="ic-puzzle" />, match: ['/puzzles/play', '/tactics'] },
         { path: '/puzzles/rush', label: 'Puzzle Rush', icon: <Zap size={22} className="ic-zap" />, match: ['/puzzles/rush'] },
         { path: '/learn', label: 'Lessons', icon: <GraduationCap size={22} className="ic-learn" />, match: ['/learn', '/exam'] },
+        { path: '/london', label: 'London coach', icon: <Speech size={22} className="ic-learn" />, match: ['/london'], badge: london },
         { path: '/openings', label: 'Openings', icon: <BookOpen size={22} className="ic-timer" />, match: ['/openings'], badge: openings },
         { path: '/practice', label: 'Your mistakes', icon: <Target size={22} className="ic-mistake" />, match: ['/practice'], badge: mistakes },
       ],

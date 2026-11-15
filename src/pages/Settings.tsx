@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Segmented, Toggle, toast } from '../components/Widgets';
 import { canUseThreads, hardwareThreads } from '../lib/engine/manager';
 import { importAll, wipeAll, type Backup } from '../lib/storage/db';
@@ -10,6 +10,94 @@ import { useSettings } from '../state/settings';
 import { themeOf } from '../lib/appearance';
 import { ListRow, PageHead } from '../components/ui';
 import { canVibrate } from '../lib/platform';
+import { PERSONAS } from '../lib/coach/phrases';
+import { LINE_MODEL, say } from '../lib/coach/talk';
+import { englishVoices, voiceRank, voiceSupported } from '../lib/coach/voice';
+import type { CoachChat, CoachPersona } from '../state/settings';
+
+/** The talking coach: who it is, its voice and how much it says. */
+function TalkingCoachSettings() {
+  const s = useSettings();
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[] | null>(null);
+  useEffect(() => {
+    void englishVoices().then((v) => setVoices(v.sort((a, b) => voiceRank(b) - voiceRank(a))));
+  }, []);
+  const canSpeak = voiceSupported();
+  return (
+    <section className="card">
+      <h2>Talking coach</h2>
+      <p className="muted" style={{ fontSize: '0.88rem' }}>
+        The coach in the London course talks you through lines, warns you before blunders and reacts to your moves, out loud, with your device’s own
+        voice.
+      </p>
+      <Row title="Coach">
+        <Segmented<CoachPersona>
+          value={s.coachPersona}
+          onChange={(coachPersona) => s.set({ coachPersona })}
+          options={(Object.keys(PERSONAS) as CoachPersona[]).map((id) => ({ value: id, label: PERSONAS[id].name }))}
+        />
+      </Row>
+      {canSpeak ? (
+        <>
+          <Row title="Talk out loud">
+            <Toggle checked={s.coachVoice} onChange={(coachVoice) => s.set({ coachVoice })} />
+          </Row>
+          {voices && voices.length > 0 && (
+            <Row title="Voice" desc="An Australian voice is picked first if your device has one.">
+              <select value={s.coachVoiceUri} onChange={(e) => s.set({ coachVoiceUri: e.target.value })} style={{ maxWidth: 220 }}>
+                <option value="">Best available</option>
+                {voices.map((v) => (
+                  <option key={v.voiceURI} value={v.voiceURI}>
+                    {v.name} ({v.lang})
+                  </option>
+                ))}
+              </select>
+            </Row>
+          )}
+          <Row title="Speed">
+            <input
+              type="range"
+              min={0.7}
+              max={1.4}
+              step={0.05}
+              value={s.coachRate}
+              onChange={(e) => s.set({ coachRate: +e.target.value })}
+              aria-label="How fast the coach talks"
+            />
+          </Row>
+          <Row title="Test">
+            <button className="btn small" onClick={() => void say({ moment: 'greet', priority: 2, bookOnly: true })}>
+              Say hello
+            </button>
+          </Row>
+        </>
+      ) : (
+        <p className="faint">This browser can’t speak, so the coach shows its words only.</p>
+      )}
+      <Row title="How much it talks">
+        <Segmented<CoachChat>
+          value={s.coachChat}
+          onChange={(coachChat) => s.set({ coachChat })}
+          options={[
+            { value: 'chatty', label: 'Chatty' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'quiet', label: 'Quiet' },
+          ]}
+        />
+      </Row>
+      <Row
+        title="Fresh lines with Claude"
+        desc={
+          s.aiCoachKey
+            ? `With your key below, the coach writes each line fresh (${LINE_MODEL}) from the lesson and the engine's verdict, so it never repeats itself. A few cents a game.`
+            : 'Add an Anthropic API key below and the coach writes each line fresh instead of picking from its phrase book.'
+        }
+      >
+        <Toggle checked={s.coachAiLines} onChange={(coachAiLines) => s.set({ coachAiLines })} />
+      </Row>
+    </section>
+  );
+}
 
 function Row({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
@@ -162,6 +250,8 @@ export function SettingsPage() {
           </Row>
         </section>
 
+        <TalkingCoachSettings />
+
         <section className="card">
           <h2>AI coach (optional)</h2>
           <p className="muted" style={{ fontSize: '0.88rem' }}>
@@ -171,7 +261,7 @@ export function SettingsPage() {
               console.anthropic.com
             </a>
             ; usage is billed to your Anthropic account (typically a few cents per question). The key is stored only in this browser and sent only to
-            the Anthropic API.
+            the Anthropic API. The talking coach can use it too (see above).
           </p>
           <Row title="Anthropic API key">
             <input

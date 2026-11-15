@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Bot, Check, ChevronRight, GraduationCap, MessageCircleHeart, Plus, Puzzle, Share, Star, Sun, Timer, X, Zap } from 'lucide-react';
+import { Bot, Check, ChevronRight, GraduationCap, MessageCircleHeart, Plus, Puzzle, Share, Speech, Star, Sun, Timer, X, Zap } from 'lucide-react';
 import { Chess } from 'chess.js';
 import { navigate } from '../lib/router';
 import { findBot, monogram } from '../lib/bots/bots';
@@ -20,6 +20,8 @@ import { useGames, userOutcome } from './Games';
 import { useOpponents, type Opponent } from '../state/opponents';
 import { Avatar, BotFace } from '../components/Avatar';
 import { useGamesToDebrief } from '../state/coach';
+import { useLondon } from '../state/london';
+import { PERSONAS } from '../lib/coach/personas';
 import { ScrollRow } from '../components/ScrollRow';
 import { ANDROID_URL } from '../state/friend';
 import { isAndroidBrowser, isInstalled, isIOS } from '../lib/platform';
@@ -138,6 +140,7 @@ export function HomePage() {
 
       <ScrollRow className="dash-hero" dots>
         <CoachHero />
+        <LondonHero />
         <button className="hero-card hero-puzzles" onClick={() => navigate('/puzzles/play')}>
           <MiniBoard fen={HERO_FEN} className="hero-art" />
           <span className="hero-title">
@@ -240,6 +243,32 @@ export function HomePage() {
         </button>
       </div>
     </div>
+  );
+}
+
+/** The talking London coach. */
+function LondonHero() {
+  const lines = useLondon((s) => s.lines);
+  const persona = useSettings((s) => s.coachPersona);
+  const started = Object.keys(lines).length;
+  const due = Object.values(lines).filter((p) => p.due <= Date.now()).length;
+  return (
+    <button className="hero-card hero-london" onClick={() => navigate('/london')}>
+      <span className="hero-emoji" aria-hidden>
+        🗣️
+      </span>
+      <span className="hero-title">
+        <Speech size={26} className="ic-learn" /> London coach
+      </span>
+      <span className="hero-sub">
+        {started
+          ? due
+            ? `${due} line${due === 1 ? '' : 's'} due. ${PERSONAS[persona].name} is waiting.`
+            : `${started} line${started === 1 ? '' : 's'} on the go. Fancy a game?`
+          : 'A coach that talks you through every London line.'}
+      </span>
+      <span className="btn primary hero-go">{started ? 'Train' : 'Start'}</span>
+    </button>
   );
 }
 

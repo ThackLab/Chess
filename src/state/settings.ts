@@ -5,6 +5,10 @@ import { currentThemeId, type BackgroundChoice, type BoardId, type PieceSetId, t
 /** A board colour, or 'auto' for the one that comes with the theme. */
 export type BoardTheme = BoardId | 'auto';
 export type ReviewDepth = 12 | 16 | 20;
+/** The talking coach's character: a laid-back mate, a calm professor or a hype man. */
+export type CoachPersona = 'mate' | 'professor' | 'hype';
+/** How often the talking coach pipes up. */
+export type CoachChat = 'chatty' | 'normal' | 'quiet';
 
 export interface Settings {
   playerName: string;
@@ -48,6 +52,16 @@ export interface Settings {
   showArrows: boolean;
   /** Anthropic API key for the optional AI coach (stored only in this browser). */
   aiCoachKey: string;
+  /** The talking coach (src/lib/coach/talk.ts): who it is, whether it speaks out loud, and how much it says. */
+  coachPersona: CoachPersona;
+  coachVoice: boolean;
+  /** A voice picked in Settings (its voiceURI), or '' for the best English voice the device has. */
+  coachVoiceUri: string;
+  /** Speaking speed, 0.7 to 1.4. */
+  coachRate: number;
+  coachChat: CoachChat;
+  /** With an Anthropic key: the talking coach writes its lines fresh with Claude instead of from its phrase book. */
+  coachAiLines: boolean;
   set: (patch: Partial<Omit<Settings, 'set'>>) => void;
 }
 
@@ -83,6 +97,12 @@ export const useSettings = create<Settings>()(
       analysisLines: 3,
       showArrows: true,
       aiCoachKey: '',
+      coachPersona: 'mate',
+      coachVoice: true,
+      coachVoiceUri: '',
+      coachRate: 1,
+      coachChat: 'normal',
+      coachAiLines: true,
       set: (patch) => set(patch),
     }),
     {

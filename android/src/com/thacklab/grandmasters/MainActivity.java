@@ -14,6 +14,8 @@ import android.os.Environment;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.MediaStore;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -31,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -46,6 +49,10 @@ public class MainActivity extends Activity {
     private WebView web;
     private ValueCallback<Uri[]> pendingFiles;
     private Nearby nearby;
+    /** The talking coach's voice: Android's own text-to-speech, started the first time it speaks. */
+    private TextToSpeech tts;
+    private boolean ttsReady;
+    private String[] pendingSpeech;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -105,8 +112,85 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         nearby.stop();
+        if (tts != null) tts.shutdown();
         web.destroy();
         super.onDestroy();
+    }
+
+    private void speechEvent(final String event, final String id) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                web.evaluateJavascript("window.__grandmastersSpeech && window.__grandmastersSpeech(" + JSONObject.quote(event) + "," + JSONObject.quote(id) + ")", null);
+            }
+        });
+    }
+
+    /** Australian English if the phone has it, then British, then whatever English it has. */
+    private void pickVoice() {
+        Locale[] wanted = { new Locale("en", "AU"), Locale.UK, Locale.US, Locale.ENGLISH };
+        for (Locale l : wanted) {
+            int r = tts.isLanguageAvailable(l);
+            if (r >= TextToSpeech.LANG_AVAILABLE) {
+                tts.setLanguage(l);
+                return;
+            }
+        }
+    }
+
+    private void say(String text, float rate, float pitch, String id) {
+        tts.setSpeechRate(rate);
+        tts.setPitch(pitch);
+        if (Build.VERSION.SDK_INT >= 21) {
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, id);
+        } else {
+            HashMap<String, String> params = new HashMap<>();
+            params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, id);
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, params);
+        }
+    }
+
+    private void startSpeech(final String text, final float rate, final float pitch, final String id) {
+        if (tts != null && ttsReady) {
+            say(text, rate, pitch, id);
+            return;
+        }
+        pendingSpeech = new String[] { text, Float.toString(rate), Float.toString(pitch), id };
+        if (tts != null) return;
+        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status != TextToSpeech.SUCCESS) {
+                    if (pendingSpeech != null) speechEvent("error", pendingSpeech[3]);
+                    pendingSpeech = null;
+                    tts = null;
+                    return;
+                }
+                ttsReady = true;
+                pickVoice();
+                tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+                        speechEvent("start", utteranceId);
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        speechEvent("done", utteranceId);
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        speechEvent("error", utteranceId);
+                    }
+                });
+                if (pendingSpeech != null) {
+                    String[] p = pendingSpeech;
+                    pendingSpeech = null;
+                    say(p[0], Float.parseFloat(p[1]), Float.parseFloat(p[2]), p[3]);
+                }
+            }
+        });
     }
 
     @Override
@@ -272,6 +356,28 @@ public class MainActivity extends Activity {
                 @Override
                 public void run() {
                     nearby.openSettings(which);
+                }
+            });
+        }
+
+        /** Says text out loud (the talking coach); cuts off anything still being said. */
+        @JavascriptInterface
+        public void speak(final String text, final float rate, final float pitch, final String id) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    startSpeech(text, Math.max(0.5f, Math.min(2f, rate)), Math.max(0.5f, Math.min(2f, pitch)), id);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void stopSpeaking() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    pendingSpeech = null;
+                    if (tts != null && ttsReady) tts.stop();
                 }
             });
         }

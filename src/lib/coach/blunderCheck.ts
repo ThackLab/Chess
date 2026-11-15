@@ -50,6 +50,14 @@ export interface Verdict {
   text?: string;
   /** Your expected score after the move, 0..1. */
   ep: number;
+  /** The quick evaluations behind the verdict (for the talking coach's own wording). */
+  before?: PositionEval;
+  after?: PositionEval;
+}
+
+/** The quick evaluation of a position (cached), or null when the game is over. */
+export function evaluatePosition(startFen: string, moves: string[]): Promise<PositionEval | null> {
+  return evaluate(startFen, moves);
 }
 
 /** Judges the move just played by `color` (the last of `moves`). */
@@ -66,12 +74,12 @@ export async function checkMove(startFen: string, moves: string[], color: Color)
   // Nothing to save in a position that was already lost, and no need to
   // interrupt a move that leaves you clearly winning (a quick search often
   // undervalues won endgames) unless it gives away a big part of the lead.
-  if (epBest - ep < WARN_AT || epBest < 0.2) return { warn: false, ep };
-  if (ep >= STILL_WINNING && epBest - ep < BIG_DROP) return { warn: false, ep };
+  if (epBest - ep < WARN_AT || epBest < 0.2) return { warn: false, ep, before, after: afterEval };
+  if (ep >= STILL_WINNING && epBest - ep < BIG_DROP) return { warn: false, ep, before, after: afterEval };
   const c = new Chess(before.fen);
   const san = playUci(c, uci)?.san ?? uci;
   const text = warningText(before, afterEval, color, uci, san) || (ep < 0.3 ? 'This gives away the game.' : 'This throws away your advantage.');
-  return { warn: true, text, ep };
+  return { warn: true, text, ep, before, after: afterEval };
 }
 
 /** After the opponent's move: how much better your position got, 0..1 (a big jump means they slipped). */

@@ -7,6 +7,7 @@ import './styles/arena.css';
 import './styles/scenes.css';
 import './styles/backgrounds.css';
 import './styles/coach.css';
+import './styles/london.css';
 import { isAndroidApp } from './lib/platform';
 import { applyAppearance } from './lib/appearance';
 import { useSettings } from './state/settings';
